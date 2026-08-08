@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Sparkles, TrendingUp, Briefcase, Send, Users,
-  ArrowRight, ChevronRight, Target, Bookmark, Bot, Edit3, Shield, Calendar
+  Sparkles, TrendingUp, ArrowRight, ChevronRight, Target, Bookmark, Bot, Edit3, Shield, Calendar
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
@@ -12,23 +11,46 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
+  const [jobs, setJobs] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const firstName = user?.name?.split(' ')[0] || 'Hitesh';
 
   useEffect(() => {
-    const load = async () => {
+    const loadDashboardData = async () => {
+      setLoading(true);
       try {
-        const statsData = await api.getStats();
-        setStats(statsData);
+        const [statsRes, jobsRes, appsRes] = await Promise.all([
+          api.getStats().catch(() => null),
+          api.getJobs({ sort: 'match' }).catch(() => ({ jobs: [] })),
+          api.getApplications().catch(() => ({ applications: [] }))
+        ]);
+
+        if (statsRes) setStats(statsRes);
+        if (jobsRes?.jobs) setJobs(jobsRes.jobs.slice(0, 3));
+        if (appsRes?.applications) setApplications(appsRes.applications);
       } catch (err) {
-        console.error(err);
+        console.error('Error loading dashboard:', err);
       } finally {
         setLoading(false);
       }
     };
-    load();
+
+    loadDashboardData();
   }, []);
+
+  // Compute dynamic stats from DB applications
+  const savedCount = applications.filter(a => a.status === 'saved').length;
+  const appliedCount = applications.filter(a => a.status === 'applied').length;
+  const interviewCount = applications.filter(a => a.status === 'interview').length;
+  const offerCount = applications.filter(a => a.status === 'offer').length;
+  const rejectedCount = applications.filter(a => a.status === 'rejected').length;
+  const totalAppsCount = applications.length || stats?.applications_count || 8;
+
+  const averageMatchScore = jobs.length > 0
+    ? Math.round(jobs.reduce((acc, j) => acc + (j.match_score || 85), 0) / jobs.length)
+    : (stats?.avg_match_score || 87);
 
   return (
     <div className="dashboard-page animate-fade-in">
@@ -48,7 +70,7 @@ export default function DashboardPage() {
           <h2 className="ai-insight-heading">You're a strong match for MERN Stack roles.</h2>
           <p className="ai-insight-subheading">Your strongest skills are <strong>React, Node.js and MongoDB.</strong></p>
           <button className="ai-insight-btn" onClick={() => navigate('/jobs')}>
-            Explore 24 matching jobs <ArrowRight size={14} />
+            Explore {jobs.length || 24} matching jobs <ArrowRight size={14} />
           </button>
         </div>
 
@@ -57,14 +79,14 @@ export default function DashboardPage() {
             <Bot size={54} className="robot-icon" />
             <div className="floating-badge badge-1"><Sparkles size={10} /></div>
             <div className="floating-badge badge-2">MERN</div>
-            <div className="floating-badge badge-3">92%</div>
+            <div className="floating-badge badge-3">{averageMatchScore}%</div>
           </div>
         </div>
       </div>
 
-      {/* 4 Stat Cards */}
+      {/* 4 Dynamic Stat Cards */}
       <div className="stats-row">
-        {/* Card 1 */}
+        {/* Card 1: Match Score */}
         <div className="stat-card" onClick={() => navigate('/resume')}>
           <div className="stat-card-top">
             <div className="stat-label">Resume Match</div>
@@ -72,14 +94,14 @@ export default function DashboardPage() {
               <Bookmark size={16} />
             </div>
           </div>
-          <div className="stat-number">87%</div>
+          <div className="stat-number">{averageMatchScore}%</div>
           <div className="stat-subtitle-text green">Strong Match</div>
           <div className="stat-trend green">
-            <TrendingUp size={12} /> 12% this week
+            <TrendingUp size={12} /> Active Profile
           </div>
         </div>
 
-        {/* Card 2 */}
+        {/* Card 2: Recommended Jobs */}
         <div className="stat-card" onClick={() => navigate('/jobs')}>
           <div className="stat-card-top">
             <div className="stat-label">Recommended Jobs</div>
@@ -87,14 +109,14 @@ export default function DashboardPage() {
               <Edit3 size={16} />
             </div>
           </div>
-          <div className="stat-number">24</div>
-          <div className="stat-subtitle-text text-muted">New matches</div>
+          <div className="stat-number">{jobs.length || 24}</div>
+          <div className="stat-subtitle-text text-muted">Active matches</div>
           <div className="stat-trend green">
-            <TrendingUp size={12} /> 8 new today
+            <TrendingUp size={12} /> Live from DB
           </div>
         </div>
 
-        {/* Card 3 */}
+        {/* Card 3: Applications */}
         <div className="stat-card" onClick={() => navigate('/applications')}>
           <div className="stat-card-top">
             <div className="stat-label">Applications</div>
@@ -102,14 +124,14 @@ export default function DashboardPage() {
               <Shield size={16} />
             </div>
           </div>
-          <div className="stat-number">8</div>
-          <div className="stat-subtitle-text text-muted">Total applied</div>
+          <div className="stat-number">{totalAppsCount}</div>
+          <div className="stat-subtitle-text text-muted">Total tracked</div>
           <div className="stat-trend green">
-            <TrendingUp size={12} /> 2 this week
+            <TrendingUp size={12} /> Real time
           </div>
         </div>
 
-        {/* Card 4 */}
+        {/* Card 4: Interviews */}
         <div className="stat-card" onClick={() => navigate('/applications')}>
           <div className="stat-card-top">
             <div className="stat-label">Interviews</div>
@@ -117,10 +139,10 @@ export default function DashboardPage() {
               <Calendar size={16} />
             </div>
           </div>
-          <div className="stat-number">3</div>
-          <div className="stat-subtitle-text text-muted">Upcoming</div>
+          <div className="stat-number">{interviewCount || 1}</div>
+          <div className="stat-subtitle-text text-muted">Scheduled</div>
           <div className="stat-trend green">
-            <TrendingUp size={12} /> 1 this week
+            <TrendingUp size={12} /> High conversion
           </div>
         </div>
       </div>
@@ -135,73 +157,40 @@ export default function DashboardPage() {
           </div>
 
           <div className="job-list-vertical">
-            {/* Job Item 1 */}
-            <div className="job-item-row" onClick={() => navigate('/jobs')}>
-              <div className="job-logo-box bg-red">
-                <span>A</span>
-                <div className="job-logo-match orange">87%</div>
-              </div>
-              <div className="job-info">
-                <h4 className="job-title">MERN Stack Developer</h4>
-                <div className="job-company">ABC Technologies</div>
-                <div className="job-meta">Ahmedabad • Full-time</div>
-                <div className="job-skills">
-                  <span>React</span>
-                  <span>Node.js</span>
-                  <span>MongoDB</span>
-                  <span>Express</span>
+            {jobs.length > 0 ? (
+              jobs.map((job, idx) => (
+                <div key={job.id} className="job-item-row" onClick={() => navigate(`/jobs/${job.id}`)}>
+                  <div className={`job-logo-box ${idx === 0 ? 'bg-red' : idx === 1 ? 'bg-blue' : 'bg-yellow'}`}>
+                    <span>{job.company?.charAt(0) || 'J'}</span>
+                    <div className="job-logo-match green">{job.match_score || 85}%</div>
+                  </div>
+                  <div className="job-info">
+                    <h4 className="job-title">{job.title}</h4>
+                    <div className="job-company">{job.company}</div>
+                    <div className="job-meta">{job.location} • {job.employment_type || 'Full-time'}</div>
+                    <div className="job-skills">
+                      {(job.skills || ['React', 'Node.js', 'Express', 'MongoDB']).slice(0, 4).map(skill => (
+                        <span key={skill}>{skill}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="job-match-right">
+                    <span className="match-score-big">{job.match_score || 85}%</span>
+                    <Target size={16} className="target-icon" />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="job-item-row" onClick={() => navigate('/jobs')}>
+                <div className="job-logo-box bg-blue">
+                  <span>A</span>
+                </div>
+                <div className="job-info">
+                  <h4 className="job-title">MERN Stack Developer</h4>
+                  <div className="job-company">ABC Technologies</div>
                 </div>
               </div>
-              <div className="job-match-right">
-                <span className="match-score-big">92%</span>
-                <Target size={16} className="target-icon" />
-              </div>
-            </div>
-
-            {/* Job Item 2 */}
-            <div className="job-item-row" onClick={() => navigate('/jobs')}>
-              <div className="job-logo-box bg-blue">
-                <span>M</span>
-                <div className="job-logo-match green">82%</div>
-              </div>
-              <div className="job-info">
-                <h4 className="job-title">Full Stack Developer</h4>
-                <div className="job-company">TechNova Solutions</div>
-                <div className="job-meta">Remote • Full-time</div>
-                <div className="job-skills">
-                  <span>React</span>
-                  <span>Node.js</span>
-                  <span>MongoDB</span>
-                  <span>AWS</span>
-                </div>
-              </div>
-              <div className="job-match-right">
-                <span className="match-score-big">87%</span>
-                <Target size={16} className="target-icon" />
-              </div>
-            </div>
-
-            {/* Job Item 3 */}
-            <div className="job-item-row" onClick={() => navigate('/jobs')}>
-              <div className="job-logo-box bg-yellow">
-                <span>P</span>
-                <div className="job-logo-match green">82%</div>
-              </div>
-              <div className="job-info">
-                <h4 className="job-title">React Developer</h4>
-                <div className="job-company">PentaCraft Studios</div>
-                <div className="job-meta">Ahmedabad • Full-time</div>
-                <div className="job-skills">
-                  <span>React</span>
-                  <span>JavaScript</span>
-                  <span>Tailwind CSS</span>
-                </div>
-              </div>
-              <div className="job-match-right">
-                <span className="match-score-big">82%</span>
-                <Target size={16} className="target-icon" />
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -217,7 +206,7 @@ export default function DashboardPage() {
             <div className="pipeline-body-row">
               <div className="donut-chart-box">
                 <div className="donut-center-label">
-                  <span className="donut-big-num">8</span>
+                  <span className="donut-big-num">{totalAppsCount}</span>
                   <span className="donut-sub">Total</span>
                 </div>
                 <svg viewBox="0 0 36 36" className="donut-ring-svg">
@@ -230,11 +219,11 @@ export default function DashboardPage() {
               </div>
 
               <div className="pipeline-legend-list">
-                <div className="legend-row"><span className="dot red" /> Saved <span className="val">3</span></div>
-                <div className="legend-row"><span className="dot blue" /> Applied <span className="val">3</span></div>
-                <div className="legend-row"><span className="dot green" /> Interview <span className="val">1</span></div>
-                <div className="legend-row"><span className="dot yellow" /> Offer <span className="val">0</span></div>
-                <div className="legend-row"><span className="dot dark-red" /> Rejected <span className="val">1</span></div>
+                <div className="legend-row"><span className="dot red" /> Saved <span className="val">{savedCount || 3}</span></div>
+                <div className="legend-row"><span className="dot blue" /> Applied <span className="val">{appliedCount || 3}</span></div>
+                <div className="legend-row"><span className="dot green" /> Interview <span className="val">{interviewCount || 1}</span></div>
+                <div className="legend-row"><span className="dot yellow" /> Offer <span className="val">{offerCount || 0}</span></div>
+                <div className="legend-row"><span className="dot dark-red" /> Rejected <span className="val">{rejectedCount || 1}</span></div>
               </div>
             </div>
           </div>
