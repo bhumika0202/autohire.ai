@@ -121,8 +121,26 @@ router.post('/upload', authenticate, upload.single('resume'), async (req, res) =
 
     const scanned = await scanPdfResume(req.file.buffer, req.file.originalname);
 
+    // Ensure database user exists before upserting career profile
+    let dbUser = await prisma.user.findUnique({ where: { id: req.user.id } });
+
+    if (!dbUser && req.user.email) {
+      dbUser = await prisma.user.upsert({
+        where: { email: req.user.email },
+        update: { name: req.user.name || 'Candidate' },
+        create: {
+          id: req.user.id,
+          name: req.user.name || 'Candidate',
+          email: req.user.email,
+          passwordHash: '$2a$10$abcdefghijklmnopqrstuv'
+        }
+      });
+    }
+
+    const targetUserId = dbUser?.id || req.user.id;
+
     const profile = await prisma.careerProfile.upsert({
-      where: { userId: req.user.id },
+      where: { userId: targetUserId },
       update: {
         about: scanned.about,
         skills: scanned.skills,
@@ -133,7 +151,7 @@ router.post('/upload', authenticate, upload.single('resume'), async (req, res) =
         aiSummary: `Scanned ${scanned.skills.length} technical skills from ${req.file.originalname}`
       },
       create: {
-        userId: req.user.id,
+        userId: targetUserId,
         about: scanned.about,
         skills: scanned.skills,
         experience: scanned.experience,
@@ -162,7 +180,7 @@ router.post('/upload', authenticate, upload.single('resume'), async (req, res) =
     });
   } catch (err) {
     console.error('Resume scan error:', err);
-    res.status(500).json({ error: 'Failed to scan resume' });
+    res.status(500).json({ error: err.message || 'Failed to scan resume' });
   }
 });
 
