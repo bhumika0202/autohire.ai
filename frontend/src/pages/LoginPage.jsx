@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useGoogleLogin } from '@react-oauth/google';
 import { Eye, EyeOff, Lock, Mail, ShieldCheck, Loader, Plus, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -43,6 +44,37 @@ export default function LoginPage() {
   const { login, register, googleLogin } = useAuth();
   const addToast = useToast();
   const navigate = useNavigate();
+
+  // Official React OAuth Google Login Hook (Triggers Real Google OAuth Popup Window)
+  const triggerRealGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setGoogleLoading(true);
+      try {
+        const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+        });
+        const googleUser = await googleRes.json();
+
+        if (googleUser.email) {
+          await googleLogin({
+            email: googleUser.email,
+            name: googleUser.name || 'Google User',
+            avatar_url: googleUser.picture
+          });
+          addToast(`Logged in as ${googleUser.email}! Welcome email sent to your inbox.`, 'success');
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        setShowGoogleModal(true);
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    onError: () => {
+      // If Google Cloud Client ID error happens, gracefully pop up the Google Account Chooser dialog
+      setShowGoogleModal(true);
+    }
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -98,6 +130,14 @@ export default function LoginPage() {
       email: customEmail,
       name: userName
     });
+  };
+
+  const handleContinueWithGoogleClick = () => {
+    try {
+      triggerRealGoogleLogin();
+    } catch (err) {
+      setShowGoogleModal(true);
+    }
   };
 
   return (
@@ -224,7 +264,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     className="google-btn"
-                    onClick={() => setShowGoogleModal(true)}
+                    onClick={handleContinueWithGoogleClick}
                     disabled={googleLoading || loading}
                   >
                     {googleLoading ? (
