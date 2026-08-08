@@ -133,7 +133,11 @@ export default function LoginPage() {
   };
 
   const handleContinueWithGoogleClick = () => {
-    setShowGoogleModal(true);
+    try {
+      triggerRealGoogleLogin();
+    } catch (err) {
+      setShowGoogleModal(true);
+    }
   };
 
   return (
