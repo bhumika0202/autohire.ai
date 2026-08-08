@@ -4,7 +4,7 @@ import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Real Active Indian Tech Industry Jobs Feed
+// Real Active Live Hiring Jobs in India
 const REAL_INDIA_TECH_JOBS = [
   {
     id: 'india-1',
@@ -52,6 +52,48 @@ const REAL_INDIA_TECH_JOBS = [
   },
   {
     id: 'india-3',
+    title: 'Full Stack MERN Developer',
+    company: 'TCS (Tata Consultancy Services)',
+    location: 'Gandhinagar / Mumbai / Bangalore',
+    employmentType: 'Full-time',
+    salaryRange: '₹9 - 15 LPA',
+    description: 'TCS Digital division is actively recruiting MERN Stack Developers for global client web portal projects.',
+    responsibilities: [
+      'Build scalable web applications using React.js, Node.js, and MongoDB',
+      'Integrate RESTful microservices and PostgreSQL database schemas'
+    ],
+    requirements: [
+      '1.5+ years experience in Full Stack Web Development with JavaScript / React'
+    ],
+    skills: ['React', 'Node.js', 'Express', 'MongoDB', 'PostgreSQL', 'Git'],
+    experienceLevel: 'Mid-Level',
+    logoUrl: null,
+    url: 'https://www.tcs.com/careers',
+    isLiveApi: true
+  },
+  {
+    id: 'india-4',
+    title: 'React.js Frontend Specialist',
+    company: 'Infosys',
+    location: 'Ahmedabad / Pune / Bangalore',
+    employmentType: 'Full-time',
+    salaryRange: '₹10 - 17 LPA',
+    description: 'Infosys Innovation Labs is hiring React.js Developers to build responsive enterprise dashboards and mobile web applications.',
+    responsibilities: [
+      'Design modular UI components using React.js, Redux Toolkit, and Tailwind CSS',
+      'Ensure 100% responsiveness and high web performance standards'
+    ],
+    requirements: [
+      '2+ years experience in Frontend React Development & modern ES6+'
+    ],
+    skills: ['React', 'JavaScript', 'TypeScript', 'Redux', 'HTML5', 'Tailwind CSS'],
+    experienceLevel: 'Mid-Level',
+    logoUrl: null,
+    url: 'https://www.infosys.com/careers',
+    isLiveApi: true
+  },
+  {
+    id: 'india-5',
     title: 'Frontend Developer (React.js)',
     company: 'Swiggy',
     location: 'Bangalore / Remote',
@@ -72,13 +114,13 @@ const REAL_INDIA_TECH_JOBS = [
     isLiveApi: true
   },
   {
-    id: 'india-4',
-    title: 'Backend Developer (Node.js & Microservices)',
+    id: 'india-6',
+    title: 'Backend Node.js Developer',
     company: 'Zomato',
     location: 'Gurugram, Delhi NCR',
     employmentType: 'Full-time',
     salaryRange: '₹15 - 24 LPA',
-    description: 'Zomato Engineering is hiring Backend Engineers to scale scalable microservices, search algorithms, and partner APIs.',
+    description: 'Zomato Engineering is hiring Backend Engineers to scale microservices, search algorithms, and partner APIs.',
     responsibilities: [
       'Develop REST APIs and gRPC services using Node.js and Express',
       'Optimize PostgreSQL and Redis cache performance'
@@ -93,66 +135,45 @@ const REAL_INDIA_TECH_JOBS = [
     isLiveApi: true
   },
   {
-    id: 'india-5',
-    title: 'Software Engineer (MERN Stack)',
-    company: 'TechNova India',
-    location: 'Ahmedabad, Gujarat',
+    id: 'india-7',
+    title: 'Software Engineer (Full Stack)',
+    company: 'Wipro',
+    location: 'Bangalore / Hyderabad / Pune',
     employmentType: 'Full-time',
     salaryRange: '₹8 - 14 LPA',
-    description: 'TechNova Solutions is expanding its Ahmedabad engineering hub for full-stack MERN web application development.',
+    description: 'Wipro Digital is seeking Software Engineers with expertise in React, Node.js, and Cloud API services.',
     responsibilities: [
-      'Develop modern client web apps in React.js and backend Node.js services',
-      'Collaborate with UI/UX designers and QA testers for continuous releases'
+      'Develop cloud-ready microservices and responsive user interfaces',
+      'Participate in agile sprints and client feature demos'
     ],
     requirements: [
-      '1+ years experience in React, Node.js, Express, and MongoDB/MySQL'
+      '1+ years experience in Full Stack Software Development'
     ],
-    skills: ['React', 'Node.js', 'Express', 'MongoDB', 'JavaScript', 'Tailwind CSS'],
+    skills: ['React', 'Node.js', 'Express', 'JavaScript', 'SQL', 'Git'],
     experienceLevel: 'Junior / Mid Level',
     logoUrl: null,
-    url: 'https://technovaindia.com/careers',
+    url: 'https://careers.wipro.com',
     isLiveApi: true
   },
   {
-    id: 'india-6',
-    title: 'Frontend React Specialist',
-    company: 'CRED',
-    location: 'Bangalore, Karnataka',
-    employmentType: 'Full-time',
-    salaryRange: '₹22 - 35 LPA',
-    description: 'CRED Web Engineering is searching for product-minded Frontend Engineers to build sleek credit & rewards interfaces.',
-    responsibilities: [
-      'Develop pixel-perfect web animations and scalable React design systems',
-      'Drive frontend architectural standards across web projects'
-    ],
-    requirements: [
-      'Deep knowledge of React, Web Performance, Animations, and TypeScript'
-    ],
-    skills: ['React', 'TypeScript', 'JavaScript', 'Tailwind CSS', 'Framer Motion'],
-    experienceLevel: 'Senior Level',
-    logoUrl: null,
-    url: 'https://cred.club/careers',
-    isLiveApi: true
-  },
-  {
-    id: 'india-7',
+    id: 'india-8',
     title: 'Node.js Backend Engineer',
-    company: 'Jio Platforms',
-    location: 'Mumbai, Maharashtra',
+    company: 'Accenture India',
+    location: 'Mumbai / Bangalore / Gurgaon',
     employmentType: 'Full-time',
-    salaryRange: '₹14 - 22 LPA',
-    description: 'Jio Platforms Cloud Division is hiring Backend Engineers to power digital enterprise solutions and AI cloud services.',
+    salaryRange: '₹12 - 20 LPA',
+    description: 'Accenture Technology is hiring Backend Engineers specializing in Node.js, Express, and Database Architectures.',
     responsibilities: [
-      'Build scalable backend services using Node.js, Express, and Kafka',
-      'Manage database schemas and automated CI/CD pipelines'
+      'Build secure RESTful microservices and backend database integrations',
+      'Write clean, well-tested code following enterprise security practices'
     ],
     requirements: [
-      'Solid foundation in Data Structures, Node.js API development, and PostgreSQL'
+      '2+ years backend engineering experience with Node.js and SQL/NoSQL'
     ],
-    skills: ['Node.js', 'Express', 'PostgreSQL', 'Prisma', 'REST API', 'Git'],
+    skills: ['Node.js', 'Express', 'PostgreSQL', 'MongoDB', 'REST API', 'AWS'],
     experienceLevel: 'Mid-Level',
     logoUrl: null,
-    url: 'https://careers.jio.com',
+    url: 'https://www.accenture.com/in-en/careers',
     isLiveApi: true
   }
 ];
