@@ -5,8 +5,8 @@ import './index.css';
 import './App.css';
 import App from './App.jsx';
 
-// Public Google OAuth Client ID for Autohire.ai
-const GOOGLE_CLIENT_ID = "928471928472-autohire-google-client-id.apps.googleusercontent.com";
+// Google OAuth Client ID (Set VITE_GOOGLE_CLIENT_ID in frontend/.env when generated from Google Cloud Console)
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "1084283134674-autohire-google-client-id.apps.googleusercontent.com";
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
