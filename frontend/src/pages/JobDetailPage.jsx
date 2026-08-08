@@ -35,8 +35,13 @@ export default function JobDetailPage() {
   const handleApply = async () => {
     setApplying(true);
     try {
-      await api.createApplication({ job_id: id, status: 'applied' });
-      addToast(`Application recorded! Redirecting to official application form...`, 'success');
+      await api.createApplication({
+        job_id: id,
+        status: 'applied',
+        job_title: job?.title,
+        company: job?.company
+      });
+      addToast(`Application receipt sent to your email! Opening official application form...`, 'success');
 
       if (job?.url) {
         window.open(job.url, '_blank', 'noopener,noreferrer');
@@ -44,7 +49,7 @@ export default function JobDetailPage() {
 
       setTimeout(() => {
         navigate('/applications');
-      }, 1000);
+      }, 1200);
     } catch (err) {
       addToast(err.message || 'Failed to apply', 'error');
     } finally {

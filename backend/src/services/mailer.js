@@ -58,6 +58,46 @@ export const sendWelcomeEmail = async ({ email, name }) => {
   }
 };
 
+export const sendApplicationConfirmationEmail = async ({ email, name, jobTitle, company, matchScore }) => {
+  try {
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #E2E8F0; border-radius: 16px; overflow: hidden; background: #FFFFFF;">
+        <div style="background: #16A34A; color: #FFFFFF; padding: 24px; text-align: center;">
+          <h1 style="margin: 0; font-size: 22px;">⚡ Application Submitted via Autohire.ai!</h1>
+        </div>
+        <div style="padding: 24px; color: #0F172A; line-height: 1.6;">
+          <p style="font-size: 16px;">Hi <strong>${name || 'Candidate'}</strong>,</p>
+          <p>Your job application for <strong>${jobTitle}</strong> at <strong>${company}</strong> has been logged successfully!</p>
+          
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 16px; border-radius: 12px; margin: 20px 0;">
+            <p style="margin: 4px 0;">🎯 <strong>Role:</strong> ${jobTitle}</p>
+            <p style="margin: 4px 0;">🏢 <strong>Company:</strong> ${company}</p>
+            <p style="margin: 4px 0;">📊 <strong>AI Match Score:</strong> <span style="color: #16A34A; font-weight: bold;">${matchScore}%</span></p>
+            <p style="margin: 4px 0;">📅 <strong>Applied Date:</strong> ${new Date().toLocaleDateString()}</p>
+          </div>
+
+          <p style="font-size: 14px; color: #64748B;">You can track your application status anytime from your Autohire Dashboard.</p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="http://localhost:5173/applications" style="background: #16A34A; color: #FFFFFF; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; display: inline-block;">View Applications Pipeline →</a>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const info = await transporter.sendMail({
+      from: `"Autohire.ai Applications" <${process.env.EMAIL_FROM || 'hiteshvaishnav602@gmail.com'}>`,
+      to: email,
+      subject: `Application Receipt: ${jobTitle} at ${company} (${matchScore}% AI Match)`,
+      html: htmlContent
+    });
+
+    console.log(`✉️ Application confirmation email sent to ${email}`);
+    return info;
+  } catch (err) {
+    console.error('❌ Failed to send application email:', err.message);
+  }
+};
+
 export const sendNotificationEmail = async ({ to, subject, text, html }) => {
   try {
     const info = await transporter.sendMail({

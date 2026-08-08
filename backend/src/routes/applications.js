@@ -1,6 +1,7 @@
 import express from 'express';
 import prisma from '../db/prisma.js';
 import { authenticate } from '../middleware/auth.js';
+import { sendApplicationConfirmationEmail } from '../services/mailer.js';
 
 const router = express.Router();
 
@@ -59,22 +60,20 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-// Create application (save/apply job - supports live & DB jobs)
+// Create application (save/apply job - supports live & DB jobs + Gmail SMTP Receipt)
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { job_id, status = 'saved' } = req.body;
+    const { job_id, status = 'saved', job_title, company } = req.body;
     if (!job_id) return res.status(400).json({ error: 'job_id is required' });
 
-    // Ensure job exists in PostgreSQL DB (create fallback entry if live API job)
     let job = await prisma.job.findUnique({ where: { id: job_id } });
 
     if (!job) {
-      // Upsert dummy/live job record into DB so foreign key constraint passes
       job = await prisma.job.create({
         data: {
           id: job_id,
-          title: 'Software Development Engineer',
-          company: 'Accenture',
+          title: job_title || 'Software Development Engineer',
+          company: company || 'Tech Enterprise',
           location: 'Bangalore, India',
           employmentType: 'Full-time',
           salaryRange: '₹12 - 20 LPA',
@@ -86,7 +85,6 @@ router.post('/', authenticate, async (req, res) => {
       });
     }
 
-    // Check if user already applied/saved this job
     const existing = await prisma.application.findUnique({
       where: {
         userId_jobId: {
@@ -99,7 +97,6 @@ router.post('/', authenticate, async (req, res) => {
     const dbStatus = mapStatusToDb(status);
 
     if (existing) {
-      // Update status to APPLIED if user clicked apply
       const updatedApp = await prisma.application.update({
         where: { id: existing.id },
         data: {
@@ -107,6 +104,16 @@ router.post('/', authenticate, async (req, res) => {
           appliedAt: dbStatus === 'APPLIED' ? new Date() : existing.appliedAt
         }
       });
+
+      if (dbStatus === 'APPLIED' && req.user.email) {
+        sendApplicationConfirmationEmail({
+          email: req.user.email,
+          name: req.user.name,
+          jobTitle: job.title,
+          company: job.company,
+          matchScore: existing.matchScore || 85
+        });
+      }
 
       return res.json({
         message: 'Application updated',
@@ -135,6 +142,17 @@ router.post('/', authenticate, async (req, res) => {
         appliedAt: dbStatus === 'APPLIED' ? new Date() : null
       }
     });
+
+    // Send instant email confirmation receipt if status is APPLIED
+    if (dbStatus === 'APPLIED' && req.user.email) {
+      sendApplicationConfirmationEmail({
+        email: req.user.email,
+        name: req.user.name,
+        jobTitle: job.title,
+        company: job.company,
+        matchScore
+      });
+    }
 
     res.status(201).json({
       application: {
