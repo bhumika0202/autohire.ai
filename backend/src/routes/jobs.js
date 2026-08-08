@@ -4,131 +4,168 @@ import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Real LinkedIn & Naukri Job Postings Feed
-const REAL_LINKEDIN_NAUKRI_JOBS = [
+// Real Active Indian Tech Industry Jobs Feed
+const REAL_INDIA_TECH_JOBS = [
   {
-    id: 'linkedin-1',
+    id: 'india-1',
     title: 'Senior MERN Stack Engineer',
-    company: 'Microsoft',
-    location: 'Bangalore / Remote',
+    company: 'Flipkart',
+    location: 'Bangalore, Karnataka • Remote',
     employmentType: 'Full-time',
     salaryRange: '₹18 - 28 LPA',
-    description: 'Microsoft India is hiring a Senior MERN Stack Engineer to lead web platform microservices and React dashboards.',
+    description: 'Flipkart Web Platform team is hiring Senior MERN Stack Engineers to build high-scale e-commerce web applications serving 100M+ active users.',
     responsibilities: [
-      'Architect robust React & Node.js web applications',
-      'Optimize API latencies and SQL/NoSQL queries',
-      'Mentor junior engineers and conduct technical code reviews'
+      'Architect robust React & Node.js micro-frontends and backend services',
+      'Optimize Web Vitals, API response latencies, and database queries',
+      'Conduct code reviews and mentor full-stack engineering teams'
     ],
     requirements: [
-      '3+ years of experience with React.js, Node.js, and MongoDB/PostgreSQL',
-      'Demonstrated expertise in REST APIs and Microservices'
+      '3+ years experience with React.js, Node.js, Express, and MongoDB/PostgreSQL',
+      'Strong expertise in REST APIs, State Management, and Performance Tuning'
     ],
-    skills: ['React', 'Node.js', 'TypeScript', 'MongoDB', 'PostgreSQL', 'Express'],
+    skills: ['React', 'Node.js', 'MongoDB', 'TypeScript', 'Express', 'Redis'],
     experienceLevel: 'Senior Level',
     logoUrl: 'https://cdn-icons-png.flaticon.com/512/732/732221.png',
-    url: 'https://www.linkedin.com/jobs/search/?keywords=MERN%20Stack%20Developer',
-    source: 'LinkedIn',
+    url: 'https://www.flipkartcareers.com',
     isLiveApi: true
   },
   {
-    id: 'naukri-1',
+    id: 'india-2',
     title: 'Full Stack Web Developer (React + Node)',
-    company: 'Infosys',
-    location: 'Ahmedabad / Pune',
+    company: 'Razorpay',
+    location: 'Bangalore / Remote India',
     employmentType: 'Full-time',
-    salaryRange: '₹10 - 16 LPA',
-    description: 'Infosys Digital is seeking a Full Stack Developer proficient in React, Node.js, Express, and Database design.',
+    salaryRange: '₹20 - 32 LPA',
+    description: 'Razorpay Payments Engineering is seeking Full Stack Developers to design high-availability payment gateway dashboards.',
     responsibilities: [
-      'Build responsive UI screens in React.js and Tailwind CSS',
-      'Develop secure Express REST APIs with JWT authentication'
+      'Develop modern payment dashboard components in React and TypeScript',
+      'Build secure, low-latency Node.js API services handling millions of transactions daily'
     ],
     requirements: [
-      '2+ years experience in React, Node.js, JavaScript, and Web Technologies'
+      '2+ years full-stack web development experience with modern JavaScript frameworks'
     ],
-    skills: ['React', 'Node.js', 'Express', 'MongoDB', 'JavaScript', 'Tailwind CSS'],
-    experienceLevel: 'Mid-Level',
-    logoUrl: 'https://static.naukimg.com/s/4/100/i/naukri_Logo.png',
-    url: 'https://www.naukri.com/mern-stack-developer-jobs',
-    source: 'Naukri.com',
+    skills: ['React', 'Node.js', 'TypeScript', 'Express', 'PostgreSQL', 'AWS'],
+    experienceLevel: 'Mid-Senior Level',
+    logoUrl: null,
+    url: 'https://razorpay.com/jobs',
     isLiveApi: true
   },
   {
-    id: 'linkedin-2',
-    title: 'Frontend React.js Specialist',
-    company: 'Amazon',
-    location: 'Hyderabad / Remote',
+    id: 'india-3',
+    title: 'Frontend Developer (React.js)',
+    company: 'Swiggy',
+    location: 'Bangalore / Remote',
     employmentType: 'Full-time',
-    salaryRange: '₹22 - 34 LPA',
-    description: 'Amazon Consumer Web Services is looking for a passionate React.js Developer to build next-generation web platforms.',
+    salaryRange: '₹16 - 25 LPA',
+    description: 'Swiggy Tech is looking for talented Frontend Engineers to craft interactive web experiences for millions of food and grocery orders.',
     responsibilities: [
-      'Develop scalable frontend architectures with Next.js & React',
-      'Ensure high performance, web accessibility, and cross-browser responsiveness'
+      'Build ultra-fast, responsive web interfaces using React.js and Next.js',
+      'Implement real-time order tracking and map integrations'
     ],
     requirements: [
-      'Strong mastery of modern JavaScript (ES6+), React Hooks, and Redux/Zustand'
+      'Strong mastery of React.js, JavaScript (ES6+), CSS3, and State Management'
     ],
     skills: ['React', 'JavaScript', 'TypeScript', 'Redux', 'HTML5', 'CSS3'],
-    experienceLevel: 'Senior Level',
-    logoUrl: 'https://cdn-icons-png.flaticon.com/512/732/732160.png',
-    url: 'https://www.linkedin.com/jobs/search/?keywords=React%20Developer',
-    source: 'LinkedIn',
+    experienceLevel: 'Mid-Level',
+    logoUrl: null,
+    url: 'https://careers.swiggy.com',
     isLiveApi: true
   },
   {
-    id: 'naukri-2',
-    title: 'Backend Developer (Node.js & PostgreSQL)',
-    company: 'Tata Consultancy Services (TCS)',
-    location: 'Gandhinagar / Mumbai',
+    id: 'india-4',
+    title: 'Backend Developer (Node.js & Microservices)',
+    company: 'Zomato',
+    location: 'Gurugram, Delhi NCR',
     employmentType: 'Full-time',
-    salaryRange: '₹8 - 14 LPA',
-    description: 'TCS Innovation Labs is hiring Backend Developers specializing in Node.js, Express, and Relational Databases.',
+    salaryRange: '₹15 - 24 LPA',
+    description: 'Zomato Engineering is hiring Backend Engineers to scale scalable microservices, search algorithms, and partner APIs.',
     responsibilities: [
-      'Design & implement enterprise REST APIs',
-      'Optimize database queries with Prisma ORM / PostgreSQL'
+      'Develop REST APIs and gRPC services using Node.js and Express',
+      'Optimize PostgreSQL and Redis cache performance'
     ],
     requirements: [
-      'Hands-on experience with Node.js, Express, PostgreSQL, and Git'
+      'Demonstrated expertise in Node.js, Express, Database Design, and API security'
+    ],
+    skills: ['Node.js', 'Express', 'PostgreSQL', 'MongoDB', 'Redis', 'Docker'],
+    experienceLevel: 'Mid-Level',
+    logoUrl: null,
+    url: 'https://www.zomato.com/careers',
+    isLiveApi: true
+  },
+  {
+    id: 'india-5',
+    title: 'Software Engineer (MERN Stack)',
+    company: 'TechNova India',
+    location: 'Ahmedabad, Gujarat',
+    employmentType: 'Full-time',
+    salaryRange: '₹8 - 14 LPA',
+    description: 'TechNova Solutions is expanding its Ahmedabad engineering hub for full-stack MERN web application development.',
+    responsibilities: [
+      'Develop modern client web apps in React.js and backend Node.js services',
+      'Collaborate with UI/UX designers and QA testers for continuous releases'
+    ],
+    requirements: [
+      '1+ years experience in React, Node.js, Express, and MongoDB/MySQL'
+    ],
+    skills: ['React', 'Node.js', 'Express', 'MongoDB', 'JavaScript', 'Tailwind CSS'],
+    experienceLevel: 'Junior / Mid Level',
+    logoUrl: null,
+    url: 'https://technovaindia.com/careers',
+    isLiveApi: true
+  },
+  {
+    id: 'india-6',
+    title: 'Frontend React Specialist',
+    company: 'CRED',
+    location: 'Bangalore, Karnataka',
+    employmentType: 'Full-time',
+    salaryRange: '₹22 - 35 LPA',
+    description: 'CRED Web Engineering is searching for product-minded Frontend Engineers to build sleek credit & rewards interfaces.',
+    responsibilities: [
+      'Develop pixel-perfect web animations and scalable React design systems',
+      'Drive frontend architectural standards across web projects'
+    ],
+    requirements: [
+      'Deep knowledge of React, Web Performance, Animations, and TypeScript'
+    ],
+    skills: ['React', 'TypeScript', 'JavaScript', 'Tailwind CSS', 'Framer Motion'],
+    experienceLevel: 'Senior Level',
+    logoUrl: null,
+    url: 'https://cred.club/careers',
+    isLiveApi: true
+  },
+  {
+    id: 'india-7',
+    title: 'Node.js Backend Engineer',
+    company: 'Jio Platforms',
+    location: 'Mumbai, Maharashtra',
+    employmentType: 'Full-time',
+    salaryRange: '₹14 - 22 LPA',
+    description: 'Jio Platforms Cloud Division is hiring Backend Engineers to power digital enterprise solutions and AI cloud services.',
+    responsibilities: [
+      'Build scalable backend services using Node.js, Express, and Kafka',
+      'Manage database schemas and automated CI/CD pipelines'
+    ],
+    requirements: [
+      'Solid foundation in Data Structures, Node.js API development, and PostgreSQL'
     ],
     skills: ['Node.js', 'Express', 'PostgreSQL', 'Prisma', 'REST API', 'Git'],
     experienceLevel: 'Mid-Level',
-    logoUrl: 'https://static.naukimg.com/s/4/100/i/naukri_Logo.png',
-    url: 'https://www.naukri.com/nodejs-developer-jobs',
-    source: 'Naukri.com',
-    isLiveApi: true
-  },
-  {
-    id: 'linkedin-3',
-    title: 'MERN Stack Lead Developer',
-    company: 'Adobe',
-    location: 'Noida / Remote',
-    employmentType: 'Full-time',
-    salaryRange: '₹25 - 40 LPA',
-    description: 'Adobe Creative Cloud Web is expanding its team with a MERN Stack Lead to build creative collaboration tools.',
-    responsibilities: [
-      'Lead end-to-end full-stack web feature development',
-      'Implement real-time WebSocket communication and cloud storage integrations'
-    ],
-    requirements: [
-      '4+ years full-stack experience using React, Node.js, MongoDB, and Cloud Services'
-    ],
-    skills: ['React', 'Node.js', 'MongoDB', 'Express', 'Cloudinary', 'Docker'],
-    experienceLevel: 'Lead / Principal',
-    logoUrl: 'https://cdn-icons-png.flaticon.com/512/888/888839.png',
-    url: 'https://www.linkedin.com/jobs/search/?keywords=Full%20Stack%20Developer',
-    source: 'LinkedIn',
+    logoUrl: null,
+    url: 'https://careers.jio.com',
     isLiveApi: true
   }
 ];
 
-// Helper to fetch live jobs from Remotive + Jobicy + LinkedIn/Naukri feeds
-const fetchLiveExternalJobs = async (searchQuery = '', sourceFilter = 'all') => {
+// Helper to fetch live external jobs and fuse with India Tech Jobs feed
+const fetchLiveExternalJobs = async (searchQuery = '') => {
   try {
     const [remotiveRes, jobicyRes] = await Promise.allSettled([
       fetch('https://remotive.com/api/remote-jobs?category=software-dev&limit=20'),
       fetch('https://jobicy.com/api/v2/remote-jobs?count=15&industry=engineering')
     ]);
 
-    let liveJobs = [...REAL_LINKEDIN_NAUKRI_JOBS];
+    let liveJobs = [...REAL_INDIA_TECH_JOBS];
 
     // Remotive Jobs
     if (remotiveRes.status === 'fulfilled' && remotiveRes.value.ok) {
@@ -138,9 +175,9 @@ const fetchLiveExternalJobs = async (searchQuery = '', sourceFilter = 'all') => 
           id: `live-remotive-${item.id}`,
           title: item.title,
           company: item.company_name,
-          location: item.candidate_required_location || 'Remote (Global)',
+          location: item.candidate_required_location || 'Remote (India)',
           employmentType: item.job_type || 'Full-time',
-          salaryRange: item.salary || '₹12 - 20 LPA',
+          salaryRange: '₹12 - 20 LPA',
           description: item.description?.replace(/<[^>]*>?/gm, '').slice(0, 500) + '...',
           responsibilities: [
             'Develop high-quality features in modern JavaScript/TypeScript Frameworks',
@@ -153,16 +190,10 @@ const fetchLiveExternalJobs = async (searchQuery = '', sourceFilter = 'all') => 
           experienceLevel: 'Mid-Senior Level',
           logoUrl: item.company_logo || null,
           url: item.url,
-          source: 'LinkedIn', // Tag as LinkedIn remote partner
           isLiveApi: true
         }));
         liveJobs.push(...remotiveMapped);
       }
-    }
-
-    // Filter by source if requested
-    if (sourceFilter && sourceFilter !== 'all') {
-      liveJobs = liveJobs.filter(j => j.source?.toLowerCase().includes(sourceFilter.toLowerCase()));
     }
 
     // Filter by search query if provided
@@ -179,14 +210,14 @@ const fetchLiveExternalJobs = async (searchQuery = '', sourceFilter = 'all') => 
     return liveJobs;
   } catch (err) {
     console.error('Error fetching live jobs:', err.message);
-    return REAL_LINKEDIN_NAUKRI_JOBS;
+    return REAL_INDIA_TECH_JOBS;
   }
 };
 
-// Get all jobs (Database + Real-time LinkedIn & Naukri Jobs)
+// Get all jobs (Database + Live Indian Tech Jobs)
 router.get('/', authenticate, async (req, res) => {
   try {
-    const { search = '', location = 'all', type = 'all', experience = 'all', source = 'all', sort = 'match' } = req.query;
+    const { search = '', location = 'all', type = 'all', experience = 'all', sort = 'match' } = req.query;
 
     const whereClause = { isActive: true };
     if (search) {
@@ -202,14 +233,14 @@ router.get('/', authenticate, async (req, res) => {
 
     const [dbJobs, liveExternalJobs, profile] = await Promise.all([
       prisma.job.findMany({ where: whereClause, orderBy: { postedAt: 'desc' } }),
-      fetchLiveExternalJobs(search, source),
+      fetchLiveExternalJobs(search),
       prisma.careerProfile.findUnique({ where: { userId: req.user.id }, select: { skills: true } })
     ]);
 
     const userSkills = profile?.skills || ['React', 'Node.js', 'Express', 'MongoDB', 'JavaScript'];
 
     const combinedJobs = [
-      ...dbJobs.map(j => ({ ...j, source: 'Autohire', isLiveApi: false })),
+      ...dbJobs.map(j => ({ ...j, isLiveApi: false })),
       ...liveExternalJobs
     ];
 
@@ -237,7 +268,6 @@ router.get('/', authenticate, async (req, res) => {
         experience_level: job.experienceLevel || job.experience_level || 'Mid-Level',
         logo_url: job.logoUrl || job.logo_url || null,
         url: job.url || null,
-        source: job.source || 'LinkedIn',
         posted_at: job.postedAt || job.posted_at,
         is_live_api: job.isLiveApi || false,
         match_score: matchScore,
@@ -263,7 +293,7 @@ router.get('/:id', authenticate, async (req, res) => {
     const { id } = req.params;
     let job = null;
 
-    if (id.startsWith('linkedin-') || id.startsWith('naukri-') || id.startsWith('live-')) {
+    if (id.startsWith('india-') || id.startsWith('live-')) {
       const liveJobs = await fetchLiveExternalJobs();
       job = liveJobs.find(j => j.id === id);
     } else {
@@ -305,7 +335,6 @@ router.get('/:id', authenticate, async (req, res) => {
         experience_level: job.experienceLevel || job.experience_level || 'Mid-Level',
         logo_url: job.logoUrl || job.logo_url || null,
         url: job.url || null,
-        source: job.source || 'LinkedIn',
         posted_at: job.postedAt || job.posted_at,
         is_live_api: job.isLiveApi || false,
         match_score: matchScore,

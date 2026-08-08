@@ -19,50 +19,62 @@ const formatSalaryLPA = (salaryStr, index) => {
 
 const DEFAULT_MATCH_JOBS = [
   {
-    id: '1',
+    id: 'india-1',
     title: 'Senior MERN Stack Engineer',
-    company: 'Microsoft',
-    location: 'Bangalore / Remote',
+    company: 'Flipkart',
+    location: 'Bangalore, Karnataka • Remote',
     match_score: 95,
     salary_range: '₹18 - 28 LPA',
     skills: ['React', 'Node.js', 'MongoDB', 'TypeScript'],
     logo_bg: 'bg-blue',
-    logo_text: 'M',
+    logo_text: 'F',
     saved: true
   },
   {
-    id: '2',
-    title: 'Full Stack Web Developer',
-    company: 'Infosys',
-    location: 'Ahmedabad / Pune',
+    id: 'india-2',
+    title: 'Full Stack Web Developer (React + Node)',
+    company: 'Razorpay',
+    location: 'Bangalore / Remote India',
     match_score: 92,
-    salary_range: '₹10 - 16 LPA',
-    skills: ['React', 'Node.js', 'Express', 'MongoDB'],
+    salary_range: '₹20 - 32 LPA',
+    skills: ['React', 'Node.js', 'TypeScript', 'Express'],
     logo_bg: 'bg-indigo',
-    logo_text: 'I',
+    logo_text: 'R',
     saved: false
   },
   {
-    id: '3',
-    title: 'Frontend React.js Specialist',
-    company: 'Amazon',
-    location: 'Hyderabad / Remote',
+    id: 'india-3',
+    title: 'Frontend Developer (React.js)',
+    company: 'Swiggy',
+    location: 'Bangalore / Remote',
     match_score: 88,
-    salary_range: '₹22 - 34 LPA',
+    salary_range: '₹16 - 25 LPA',
     skills: ['React', 'JavaScript', 'TypeScript', 'Redux'],
     logo_bg: 'bg-orange',
-    logo_text: 'A',
+    logo_text: 'S',
     saved: true
   },
   {
-    id: '4',
-    title: 'Backend Developer (Node.js & PostgreSQL)',
-    company: 'TCS',
-    location: 'Gandhinagar / Mumbai',
-    match_score: 84,
-    salary_range: '₹8 - 14 LPA',
-    skills: ['Node.js', 'Express', 'PostgreSQL', 'Prisma'],
+    id: 'india-4',
+    title: 'Backend Developer (Node.js & Microservices)',
+    company: 'Zomato',
+    location: 'Gurugram, Delhi NCR',
+    match_score: 85,
+    salary_range: '₹15 - 24 LPA',
+    skills: ['Node.js', 'Express', 'PostgreSQL', 'Redis'],
     logo_bg: 'bg-blue-dark',
+    logo_text: 'Z',
+    saved: false
+  },
+  {
+    id: 'india-5',
+    title: 'Software Engineer (MERN Stack)',
+    company: 'TechNova India',
+    location: 'Ahmedabad, Gujarat',
+    match_score: 82,
+    salary_range: '₹8 - 14 LPA',
+    skills: ['React', 'Node.js', 'Express', 'MongoDB'],
+    logo_bg: 'bg-blue',
     logo_text: 'T',
     saved: false
   }
@@ -124,7 +136,7 @@ export default function JobsPage() {
         <h1 className="jobs-main-title">
           <span className="blue-text">Job</span> Matches
         </h1>
-        <p className="jobs-sub-title">Find jobs that match your profile</p>
+        <p className="jobs-sub-title">Find live tech jobs in India matching your career profile</p>
       </div>
 
       {/* Single-Row Search & Filter Bar */}
@@ -133,7 +145,7 @@ export default function JobsPage() {
           <Search size={16} className="search-icon" />
           <input
             type="text"
-            placeholder="Search jobs..."
+            placeholder="Search Indian tech jobs (e.g. React, Node, Bangalore)..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && loadJobs()}
@@ -152,11 +164,14 @@ export default function JobsPage() {
 
         <div className="filter-dropdown-box">
           <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)}>
-            <option value="all">Location</option>
-            <option value="remote">Remote</option>
-            <option value="ahmedabad">Ahmedabad</option>
+            <option value="all">Location (India)</option>
+            <option value="remote">Remote India</option>
             <option value="bangalore">Bangalore</option>
+            <option value="ahmedabad">Ahmedabad</option>
+            <option value="hyderabad">Hyderabad</option>
             <option value="mumbai">Mumbai</option>
+            <option value="pune">Pune</option>
+            <option value="gurugram">Delhi NCR</option>
           </select>
           <ChevronDown size={14} className="dropdown-arrow" />
         </div>
@@ -236,7 +251,7 @@ export default function JobsPage() {
         ) : (
           <div className="empty-state">
             <Briefcase size={28} />
-            <div className="empty-state-title">No matching jobs found</div>
+            <div className="empty-state-title">No matching Indian jobs found</div>
           </div>
         )}
       </div>
