@@ -1,8 +1,11 @@
 import express from 'express';
 import multer from 'multer';
-import pdfParse from 'pdf-parse';
+import { createRequire } from 'module';
 import prisma from '../db/prisma.js';
 import { authenticate } from '../middleware/auth.js';
+
+const require = createRequire(import.meta.url);
+const pdfParse = require('pdf-parse');
 
 const router = express.Router();
 
