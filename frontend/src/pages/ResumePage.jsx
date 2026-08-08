@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, FileText, Check, Loader, User, Briefcase, GraduationCap, Code, FolderOpen, Award, Edit2, MoreVertical, Trash2, CloudUpload } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
@@ -19,17 +19,34 @@ export default function ResumePage() {
   const [step, setStep] = useState(-1); // -1 = idle
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showHistoryMenu, setShowHistoryMenu] = useState(false);
+  const [showHistoryMenu, setShowHistoryMenu] = useState(null);
+  const [resumeHistory, setResumeHistory] = useState([]);
 
-  // Default history item matching reference screenshot
-  const [resumeHistory, setResumeHistory] = useState([
-    {
-      id: '1',
-      name: 'Hitesh_Sharma_Resume.pdf',
-      date: 'Uploaded on Aug 7, 2024 • 2.4 MB',
-      status: 'Analyzed'
-    }
-  ]);
+  // Fetch real uploaded resume profile on load
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await api.getProfile();
+        if (res.profile) {
+          setProfile(res.profile);
+          if (res.profile.resume_url) {
+            const fileName = res.profile.resume_url.replace('uploads/', '');
+            setResumeHistory([
+              {
+                id: res.profile.id || '1',
+                name: fileName,
+                date: `Uploaded on ${new Date(res.profile.updated_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • 2.4 MB`,
+                status: 'Analyzed'
+              }
+            ]);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const processFile = async (f) => {
     if (!f) return;
@@ -50,16 +67,16 @@ export default function ResumePage() {
       await new Promise(r => setTimeout(r, 400));
       setProfile(data.profile);
 
-      // Add to history
+      // Add actual uploaded file to history list
       const newHistoryItem = {
         id: Date.now().toString(),
         name: f.name,
         date: `Uploaded today • ${(f.size / (1024 * 1024)).toFixed(1)} MB`,
         status: 'Analyzed'
       };
-      setResumeHistory(prev => [newHistoryItem, ...prev]);
+      setResumeHistory(prev => [newHistoryItem, ...prev.filter(h => h.name !== f.name)]);
 
-      addToast('Resume analyzed & career profile generated!', 'success');
+      addToast('Resume analyzed & career profile saved to PostgreSQL!', 'success');
     } catch (err) {
       addToast(err.message || 'Failed to process resume', 'error');
       setStep(-1);
@@ -81,9 +98,6 @@ export default function ResumePage() {
   };
 
   const skills = Array.isArray(profile?.skills) ? profile.skills : [];
-  const experience = Array.isArray(profile?.experience) ? profile.experience : (typeof profile?.experience === 'string' ? JSON.parse(profile.experience || '[]') : []);
-  const education = Array.isArray(profile?.education) ? profile.education : (typeof profile?.education === 'string' ? JSON.parse(profile.education || '[]') : []);
-  const projects = Array.isArray(profile?.projects) ? profile.projects : (typeof profile?.projects === 'string' ? JSON.parse(profile.projects || '[]') : []);
 
   return (
     <div className="resume-page animate-fade-in">
@@ -94,7 +108,7 @@ export default function ResumePage() {
       </div>
 
       {step === -1 ? (
-        /* Upload Area Card (Matching Screenshot) */
+        /* Upload Area Card */
         <div
           className={`upload-card-box ${dragging ? 'dragging' : ''}`}
           onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -186,41 +200,43 @@ export default function ResumePage() {
         </div>
       )}
 
-      {/* Resume History Section (Matching Screenshot) */}
-      <div className="resume-history-section">
-        <h3 className="history-section-title">Resume History</h3>
+      {/* Resume History Section */}
+      {resumeHistory.length > 0 && (
+        <div className="resume-history-section">
+          <h3 className="history-section-title">Resume History</h3>
 
-        <div className="history-list">
-          {resumeHistory.map(item => (
-            <div key={item.id} className="history-card">
-              <div className="pdf-icon-box">
-                <FileText size={22} />
-              </div>
-              <div className="history-info">
-                <div className="history-filename">{item.name}</div>
-                <div className="history-date">{item.date}</div>
-              </div>
+          <div className="history-list">
+            {resumeHistory.map(item => (
+              <div key={item.id} className="history-card">
+                <div className="pdf-icon-box">
+                  <FileText size={22} />
+                </div>
+                <div className="history-info">
+                  <div className="history-filename">{item.name}</div>
+                  <div className="history-date">{item.date}</div>
+                </div>
 
-              <div className="history-actions">
-                <span className="badge-analyzed">{item.status}</span>
-                <div className="history-menu-wrap">
-                  <button className="btn-icon" onClick={() => setShowHistoryMenu(prev => prev === item.id ? null : item.id)}>
-                    <MoreVertical size={16} />
-                  </button>
-                  {showHistoryMenu === item.id && (
-                    <div className="history-dropdown-menu">
-                      <button onClick={() => { setStep(-1); setShowHistoryMenu(null); }}>Re-analyze</button>
-                      <button className="danger" onClick={() => { handleDeleteHistory(item.id); setShowHistoryMenu(null); }}>
-                        <Trash2 size={13} /> Delete
-                      </button>
-                    </div>
-                  )}
+                <div className="history-actions">
+                  <span className="badge-analyzed">{item.status}</span>
+                  <div className="history-menu-wrap">
+                    <button className="btn-icon" onClick={() => setShowHistoryMenu(prev => prev === item.id ? null : item.id)}>
+                      <MoreVertical size={16} />
+                    </button>
+                    {showHistoryMenu === item.id && (
+                      <div className="history-dropdown-menu">
+                        <button onClick={() => { setStep(-1); setShowHistoryMenu(null); }}>Re-analyze</button>
+                        <button className="danger" onClick={() => { handleDeleteHistory(item.id); setShowHistoryMenu(null); }}>
+                          <Trash2 size={13} /> Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
