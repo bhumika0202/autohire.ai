@@ -18,6 +18,12 @@ const upload = multer({
   }
 });
 
+// Helper to escape special regex characters (like +, #, ., *)
+const escapeRegExp = (str) => {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
 // Helper to strip null bytes (0x00) & raw PDF dictionary markers
 const sanitizeUtf8 = (str) => {
   if (typeof str !== 'string') return '';
@@ -57,13 +63,17 @@ const scanPdfResume = async (fileBuffer, filename) => {
   const cleanText = sanitizeUtf8(rawText);
   const textLower = cleanText.toLowerCase();
 
-  // 1. Detect Real Skills from Document
+  // 1. Detect Real Skills from Document safely with escaped regex
   const foundSkills = KNOWN_SKILLS.filter(skill => {
     const sLower = skill.toLowerCase();
-    // Match exact word boundary if short (e.g. Go, C, SQL)
     if (sLower.length <= 3) {
-      const regex = new RegExp(`\\b${sLower}\\b`, 'i');
-      return regex.test(textLower);
+      const escaped = escapeRegExp(sLower);
+      try {
+        const regex = new RegExp(`(?:\\b|\\s|^)${escaped}(?:\\b|\\s|$)`, 'i');
+        return regex.test(textLower);
+      } catch (e) {
+        return textLower.includes(sLower);
+      }
     }
     return textLower.includes(sLower);
   });
@@ -96,7 +106,6 @@ const scanPdfResume = async (fileBuffer, filename) => {
       !l.includes('http')
     );
 
-  // Extract candidate About/Summary
   const summaryCandidateLines = cleanLines.filter(l =>
     l.length > 30 &&
     !l.toLowerCase().includes('education') &&
