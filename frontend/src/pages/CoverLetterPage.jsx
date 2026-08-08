@@ -48,12 +48,18 @@ export default function CoverLetterPage() {
     setGenerating(true);
     setAiMsgIdx(0);
     try {
-      // Delay for UX
-      await new Promise(r => setTimeout(r, 2800));
-      const data = await api.generateCoverLetter({ job_id: selectedJob });
+      await new Promise(r => setTimeout(r, 1200));
+      const targetJob = jobs.find(j => j.id === selectedJob);
+      const data = await api.generateCoverLetter({
+        job_id: selectedJob,
+        job_title: targetJob?.title,
+        company: targetJob?.company,
+        location: targetJob?.location,
+        skills: targetJob?.skills
+      });
       setCoverLetter(data.coverLetter);
       setEditContent(data.coverLetter.content);
-      addToast('Cover letter generated!', 'success');
+      addToast(`Cover letter generated for ${targetJob?.company || 'the job'}!`, 'success');
     } catch (err) {
       addToast(err.message || 'Failed to generate', 'error');
     } finally {

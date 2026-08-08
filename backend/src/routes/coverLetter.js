@@ -4,10 +4,10 @@ import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Generate cover letter (supports live & DB jobs)
+// Generate cover letter (supports live & DB jobs with dynamic real company metadata)
 router.post('/generate', authenticate, async (req, res) => {
   try {
-    const { job_id } = req.body;
+    const { job_id, job_title, company, location, skills: reqSkills } = req.body;
     if (!job_id) return res.status(400).json({ error: 'job_id is required' });
 
     let [job, profile, user] = await Promise.all([
@@ -16,20 +16,33 @@ router.post('/generate', authenticate, async (req, res) => {
       prisma.user.findUnique({ where: { id: req.user.id }, select: { name: true } })
     ]);
 
-    // If live API job, create fallback job record in DB so cover letter foreign key works
+    const targetCompany = company || job?.company || 'Enterprise';
+    const targetTitle = job_title || job?.title || 'Software Development Engineer';
+    const targetLocation = location || job?.location || 'Bangalore, India';
+
+    // If live API job or company mismatch, update/create DB record using REAL company metadata
     if (!job) {
       job = await prisma.job.create({
         data: {
           id: job_id,
-          title: 'Software Development Engineer',
-          company: 'Accenture',
-          location: 'Bangalore, India',
+          title: targetTitle,
+          company: targetCompany,
+          location: targetLocation,
           employmentType: 'Full-time',
-          salaryRange: '₹12 - 22 LPA',
-          description: 'Live Software Engineering role',
-          skills: ['React', 'Node.js', 'JavaScript'],
+          salaryRange: '₹14 - 24 LPA',
+          description: `Live software development position at ${targetCompany}`,
+          skills: Array.isArray(reqSkills) && reqSkills.length > 0 ? reqSkills : ['React', 'Node.js', 'JavaScript'],
           experienceLevel: 'Mid-Level',
           isActive: true
+        }
+      });
+    } else if (company && job.company !== company) {
+      job = await prisma.job.update({
+        where: { id: job_id },
+        data: {
+          title: targetTitle,
+          company: targetCompany,
+          location: targetLocation
         }
       });
     }
