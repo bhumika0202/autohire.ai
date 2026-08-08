@@ -1,0 +1,323 @@
+.career-profile-page {
+  padding: 4px 32px 32px 32px;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.career-profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.career-profile-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.5px;
+  margin-bottom: 2px;
+}
+
+.career-profile-subtitle {
+  font-size: 14px;
+  color: #64748B;
+}
+
+.edit-profile-btn {
+  height: 40px;
+  padding: 0 20px;
+  background: #2563EB;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.edit-profile-btn:hover {
+  background: #1D4ED8;
+  transform: translateY(-1px);
+}
+
+/* Two Column Grid */
+.career-profile-grid {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
+}
+
+/* Left Column: Bio Card */
+.profile-left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.bio-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.bio-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+
+}
+
+.bio-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #2563EB;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.user-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0F172A;
+  margin-bottom: 2px;
+}
+
+.user-role {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748B;
+  margin-bottom: 8px;
+}
+
+.contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #64748B;
+}
+
+.bio-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid #F1F5F9;
+  padding-top: 20px;
+}
+
+.section-heading {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.bio-text {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+/* Timeline */
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timeline-row {
+  display: flex;
+  gap: 12px;
+  position: relative;
+}
+
+.timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2563EB;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.timeline-dot.blue { background: #6366F1; }
+
+.timeline-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timeline-role {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.timeline-company {
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+.timeline-year {
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+.timeline-desc {
+  font-size: 12px;
+  color: #475569;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+/* Right Column */
+.profile-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card-section-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0F172A;
+  margin-bottom: 16px;
+}
+
+/* Top Skills */
+.skills-pill-wrap {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.skill-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563EB;
+  background: #EFF6FF;
+  border: 1px solid #DBEAFE;
+  padding: 6px 14px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.skill-tag:hover {
+  background: #2563EB;
+  color: #FFFFFF;
+}
+
+/* Projects */
+.projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.project-card-item {
+  border: 1px solid #F1F5F9;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #F8FAFC;
+}
+
+.project-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0F172A;
+}
+
+.project-description {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.project-skills {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.project-skill-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6366F1;
+  background: #EEF2FF;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* Certifications */
+.certs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cert-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #F8FAFC;
+  border-radius: 12px;
+  border: 1px solid #F1F5F9;
+}
+
+.cert-icon {
+  color: #16A34A;
+  flex-shrink: 0;
+}
+
+.cert-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.cert-provider {
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+@media (max-width: 1024px) {
+  .career-profile-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .career-profile-page { padding: 16px; }
+}

@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  avatarUrl    String?  @map("avatar_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  careerProfile CareerProfile?
+  applications  Application[]
+  coverLetters  CoverLetter[]
+
+  @@map("users")
+}
+
+model CareerProfile {
+  id             String   @id @default(uuid())
+  userId         String   @unique @map("user_id")
+  about          String?
+  targetRoles    String[] @map("target_roles")
+  skills         String[]
+  experience     Json     @default("[]")
+  education      Json     @default("[]")
+  projects       Json     @default("[]")
+  certifications String[]
+  resumeUrl      String?  @map("resume_url")
+  resumeText     String?  @map("resume_text")
+  aiSummary      String?  @map("ai_summary")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("career_profiles")
+}
+
+model Job {
+  id              String   @id @default(uuid())
+  title           String
+  company         String
+  location        String?
+  employmentType  String?  @map("employment_type")
+  salaryRange     String?  @map("salary_range")
+  description     String?
+  responsibilities String[]
+  requirements    String[]
+  skills          String[]
+  experienceLevel String?  @map("experience_level")
+  logoUrl         String?  @map("logo_url")
+  isActive        Boolean  @default(true) @map("is_active")
+  postedAt        DateTime @default(now()) @map("posted_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  applications Application[]
+  coverLetters CoverLetter[]
+
+  @@map("jobs")
+}
+
+model Application {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  jobId          String   @map("job_id")
+  status         Status   @default(SAVED)
+  matchScore     Int      @default(0) @map("match_score")
+  matchingSkills String[] @map("matching_skills")
+  missingSkills  String[] @map("missing_skills")
+  aiExplanation  String?  @map("ai_explanation")
+  coverLetter    String?  @map("cover_letter")
+  notes          String?
+  appliedAt      DateTime? @map("applied_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@map("applications")
+}
+
+model CoverLetter {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  jobId         String   @map("job_id")
+  content       String
+  aiSuggestions Json     @default("[]") @map("ai_suggestions")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@map("cover_letters")
+}
+
+enum Status {
+  SAVED
+  APPLIED
+  INTERVIEW
+  OFFER
+  REJECTED
+
+  @@map("status")
+}
