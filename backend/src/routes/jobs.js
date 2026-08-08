@@ -157,17 +157,67 @@ const REAL_INDIA_TECH_JOBS = [
   }
 ];
 
-// Helper to fetch live external jobs and fuse with India Tech Jobs feed
+// Helper to fetch live jobs from Adzuna API (India Region)
+const fetchAdzunaJobs = async (searchQuery = '') => {
+  const appId = process.env.ADZUNA_APP_ID;
+  const appKey = process.env.ADZUNA_APP_KEY;
+
+  if (!appId || !appKey) return [];
+
+  try {
+    const q = encodeURIComponent(searchQuery || 'developer');
+    const url = `https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=${appId}&app_key=${appKey}&results_per_page=20&what=${q}&content-type=application/json`;
+
+    const res = await fetch(url);
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    if (!Array.isArray(data.results)) return [];
+
+    return data.results.map(item => ({
+      id: `adzuna-${item.id}`,
+      title: item.title?.replace(/<[^>]*>?/gm, '') || 'Software Developer',
+      company: item.company?.display_name || 'Tech Enterprise',
+      location: item.location?.display_name || 'India',
+      employmentType: item.contract_time === 'full_time' ? 'Full-time' : 'Contract',
+      salaryRange: item.salary_min ? `₹${(item.salary_min / 100000).toFixed(1)} - ${(item.salary_max / 100000).toFixed(1)} LPA` : '₹10 - 18 LPA',
+      description: item.description?.replace(/<[^>]*>?/gm, '').slice(0, 500) + '...',
+      responsibilities: [
+        'Build high-performance web applications using modern technology stack',
+        'Collaborate with product managers and engineering leaders'
+      ],
+      requirements: [
+        'Hands-on experience in Full Stack Software Development',
+        'Strong problem solving and database skills'
+      ],
+      skills: ['React', 'Node.js', 'JavaScript', 'SQL', 'REST API'],
+      experienceLevel: 'Mid-Level',
+      logoUrl: null,
+      url: item.redirect_url,
+      isLiveApi: true
+    }));
+  } catch (err) {
+    console.error('Adzuna API Fetch Error:', err.message);
+    return [];
+  }
+};
+
+// Helper to fetch live external jobs and fuse with India Tech Jobs feed & Adzuna API
 const fetchLiveExternalJobs = async (searchQuery = '') => {
   try {
-    const [remotiveRes, jobicyRes] = await Promise.allSettled([
+    const [remotiveRes, adzunaJobs] = await Promise.allSettled([
       fetch('https://remotive.com/api/remote-jobs?category=software-dev&limit=20'),
-      fetch('https://jobicy.com/api/v2/remote-jobs?count=15&industry=engineering')
+      fetchAdzunaJobs(searchQuery)
     ]);
 
     let liveJobs = [...REAL_INDIA_TECH_JOBS];
 
-    // Remotive Jobs
+    // Add Adzuna Jobs if available
+    if (adzunaJobs.status === 'fulfilled' && Array.isArray(adzunaJobs.value) && adzunaJobs.value.length > 0) {
+      liveJobs.unshift(...adzunaJobs.value);
+    }
+
+    // Add Remotive Jobs
     if (remotiveRes.status === 'fulfilled' && remotiveRes.value.ok) {
       const data = await remotiveRes.value.json();
       if (Array.isArray(data.jobs)) {
@@ -214,7 +264,7 @@ const fetchLiveExternalJobs = async (searchQuery = '') => {
   }
 };
 
-// Get all jobs (Database + Live Indian Tech Jobs)
+// Get all jobs (Database + Live Indian Tech Jobs & Adzuna API)
 router.get('/', authenticate, async (req, res) => {
   try {
     const { search = '', location = 'all', type = 'all', experience = 'all', sort = 'match' } = req.query;
@@ -293,7 +343,7 @@ router.get('/:id', authenticate, async (req, res) => {
     const { id } = req.params;
     let job = null;
 
-    if (id.startsWith('india-') || id.startsWith('live-')) {
+    if (id.startsWith('india-') || id.startsWith('adzuna-') || id.startsWith('live-')) {
       const liveJobs = await fetchLiveExternalJobs();
       job = liveJobs.find(j => j.id === id);
     } else {
