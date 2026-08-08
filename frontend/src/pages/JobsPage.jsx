@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bookmark, SlidersHorizontal, ChevronDown, Briefcase } from 'lucide-react';
+import { Search, Bookmark, SlidersHorizontal, ChevronDown, Briefcase, ExternalLink } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import './JobsPage.css';
@@ -12,64 +12,62 @@ const formatSalaryLPA = (salaryStr, index) => {
     return lpaList[index % lpaList.length];
   }
   if (salaryStr.includes('LPA')) return salaryStr;
-
-  // Map unformatted DB salary strings to LPA
-  if (salaryStr.includes('12,000,00') || salaryStr.includes('18,000,00')) return '₹12 - 18 LPA';
-  if (salaryStr.includes('15,000,00') || salaryStr.includes('22,000,00')) return '₹7 - 12 LPA';
-  if (salaryStr.includes('8,000,00')) return '₹4 - 7 LPA';
-  if (salaryStr.includes('14,000,00') || salaryStr.includes('20,000,00')) return '₹5 - 9 LPA';
-  if (salaryStr.includes('5,000,00')) return '₹3 - 6 LPA';
+  if (salaryStr.includes('$')) return salaryStr;
 
   return '₹8 - 10 LPA';
 };
 
 const DEFAULT_MATCH_JOBS = [
   {
-    id: '1',
-    title: 'MERN Stack Developer',
-    company: 'ABC Technologies',
-    location: 'Ahmedabad • Full-time',
-    match_score: 92,
-    salary_range: '₹8 - 10 LPA',
-    skills: ['React', 'Node.js', 'MongoDB', 'Express'],
+    id: 'linkedin-1',
+    title: 'Senior MERN Stack Engineer',
+    company: 'Microsoft',
+    location: 'Bangalore / Remote',
+    match_score: 95,
+    salary_range: '₹18 - 28 LPA',
+    skills: ['React', 'Node.js', 'MongoDB', 'TypeScript'],
     logo_bg: 'bg-blue',
-    logo_text: 'A',
+    logo_text: 'M',
+    source: 'LinkedIn',
     saved: true
   },
   {
-    id: '2',
-    title: 'Full Stack Developer',
-    company: 'TechNova Solutions',
-    location: 'Remote • Full-time',
-    match_score: 87,
-    salary_range: '₹7 - 12 LPA',
-    skills: ['React', 'Node.js', 'MongoDB', 'AWS'],
+    id: 'naukri-1',
+    title: 'Full Stack Web Developer (React + Node)',
+    company: 'Infosys',
+    location: 'Ahmedabad / Pune',
+    match_score: 92,
+    salary_range: '₹10 - 16 LPA',
+    skills: ['React', 'Node.js', 'Express', 'MongoDB'],
     logo_bg: 'bg-indigo',
-    logo_text: 'M',
+    logo_text: 'I',
+    source: 'Naukri.com',
     saved: false
   },
   {
-    id: '3',
-    title: 'Backend Developer (Node.js)',
-    company: 'InveStack',
-    location: 'Bangalore • Full-time',
-    match_score: 75,
-    salary_range: '₹5 - 9 LPA',
-    skills: ['Node.js', 'Express', 'MongoDB', 'REST API'],
+    id: 'linkedin-2',
+    title: 'Frontend React.js Specialist',
+    company: 'Amazon',
+    location: 'Hyderabad / Remote',
+    match_score: 88,
+    salary_range: '₹22 - 34 LPA',
+    skills: ['React', 'JavaScript', 'TypeScript', 'Redux'],
     logo_bg: 'bg-orange',
-    logo_text: 'I',
+    logo_text: 'A',
+    source: 'LinkedIn',
     saved: true
   },
   {
-    id: '4',
-    title: 'React Developer',
-    company: 'PentaCraft Studios',
-    location: 'Ahmedabad • Full-time',
-    match_score: 72,
-    salary_range: '₹4 - 7 LPA',
-    skills: ['React', 'JavaScript', 'Tailwind CSS'],
+    id: 'naukri-2',
+    title: 'Backend Developer (Node.js & PostgreSQL)',
+    company: 'TCS',
+    location: 'Gandhinagar / Mumbai',
+    match_score: 84,
+    salary_range: '₹8 - 14 LPA',
+    skills: ['Node.js', 'Express', 'PostgreSQL', 'Prisma'],
     logo_bg: 'bg-blue-dark',
-    logo_text: 'R',
+    logo_text: 'T',
+    source: 'Naukri.com',
     saved: false
   }
 ];
@@ -82,13 +80,20 @@ export default function JobsPage() {
   const [search, setSearch] = useState('');
   const [experienceFilter, setExperienceFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('match');
   const [savedJobs, setSavedJobs] = useState({});
 
   const loadJobs = async () => {
     setLoading(true);
     try {
-      const data = await api.getJobs({ search, location: locationFilter, experience: experienceFilter, sort: sortBy });
+      const data = await api.getJobs({
+        search,
+        location: locationFilter,
+        experience: experienceFilter,
+        source: sourceFilter,
+        sort: sortBy
+      });
       if (data.jobs && data.jobs.length > 0) {
         setJobs(data.jobs.map((j, i) => ({
           ...j,
@@ -104,7 +109,7 @@ export default function JobsPage() {
     }
   };
 
-  useEffect(() => { loadJobs(); }, [sortBy, locationFilter, experienceFilter]);
+  useEffect(() => { loadJobs(); }, [sortBy, locationFilter, experienceFilter, sourceFilter]);
 
   const handleSave = async (e, jobId) => {
     e.stopPropagation();
@@ -125,7 +130,7 @@ export default function JobsPage() {
         <h1 className="jobs-main-title">
           <span className="blue-text">Job</span> Matches
         </h1>
-        <p className="jobs-sub-title">Find jobs that match your profile</p>
+        <p className="jobs-sub-title">Find live jobs from LinkedIn, Naukri, & top tech companies</p>
       </div>
 
       {/* Single-Row Search & Filter Bar */}
@@ -134,11 +139,21 @@ export default function JobsPage() {
           <Search size={16} className="search-icon" />
           <input
             type="text"
-            placeholder="Search jobs..."
+            placeholder="Search LinkedIn & Naukri jobs..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && loadJobs()}
           />
+        </div>
+
+        {/* Source Filter (LinkedIn / Naukri) */}
+        <div className="filter-dropdown-box">
+          <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}>
+            <option value="all">All Sources</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="naukri">Naukri.com</option>
+          </select>
+          <ChevronDown size={14} className="dropdown-arrow" />
         </div>
 
         <div className="filter-dropdown-box">
@@ -191,13 +206,24 @@ export default function JobsPage() {
               <div key={job.id} className="job-horizontal-item" onClick={() => navigate(`/jobs/${job.id}`)}>
                 {/* Logo & % Tag Underneath */}
                 <div className={`job-avatar-logo ${job.logo_bg || 'bg-blue'}`}>
-                  <span>{job.logo_text || job.company?.charAt(0)}</span>
+                  {job.logo_url ? (
+                    <img src={job.logo_url} alt={job.company} className="logo-img-fit" />
+                  ) : (
+                    <span>{job.logo_text || job.company?.charAt(0)}</span>
+                  )}
                   <div className="avatar-match-tag">{job.match_score || 85}%</div>
                 </div>
 
                 {/* Info */}
                 <div className="job-item-info">
-                  <h3 className="job-item-title">{job.title}</h3>
+                  <div className="job-title-row">
+                    <h3 className="job-item-title">{job.title}</h3>
+                    {job.source && (
+                      <span className={`source-badge ${job.source.toLowerCase().includes('naukri') ? 'naukri' : 'linkedin'}`}>
+                        {job.source}
+                      </span>
+                    )}
+                  </div>
                   <div className="job-item-company">{job.company}</div>
                   <div className="job-item-location">{job.location}</div>
                 </div>
