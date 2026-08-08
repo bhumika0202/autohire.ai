@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail, ShieldCheck, Loader, User, Plus, X } from 'lucide-react';
+import { useGoogleLogin } from '@react-oauth/google';
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, Loader, Plus, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import './LoginPage.css';
@@ -35,7 +36,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // Google Account Picker State
+  // Google Account Selector Dialog State
   const [showGoogleModal, setShowGoogleModal] = useState(false);
   const [customEmail, setCustomEmail] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -43,6 +44,39 @@ export default function LoginPage() {
   const { login, register, googleLogin } = useAuth();
   const addToast = useToast();
   const navigate = useNavigate();
+
+  // Official React OAuth Google Login Hook (Triggers Real Google OAuth Popup)
+  const triggerRealGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setGoogleLoading(true);
+      try {
+        // Fetch user info from Google API
+        const googleRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+        });
+        const googleUser = await googleRes.json();
+
+        if (googleUser.email) {
+          const res = await googleLogin({
+            email: googleUser.email,
+            name: googleUser.name || 'Google User',
+            avatar_url: googleUser.picture
+          });
+          addToast(`Logged in as ${googleUser.email}! Welcome email sent to your inbox.`, 'success');
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        console.error('Google Userinfo fetch error:', err);
+        setShowGoogleModal(true);
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    onError: () => {
+      console.warn('Real Google OAuth popup closed or blocked, opening account picker.');
+      setShowGoogleModal(true);
+    }
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -77,7 +111,7 @@ export default function LoginPage() {
         email: account.email,
         name: account.name
       });
-      addToast(`Logged in as ${account.email}! Welcome email sent.`, 'success');
+      addToast(`Logged in as ${account.email}! Welcome email sent to your inbox.`, 'success');
       navigate('/dashboard');
     } catch (err) {
       addToast(err.message || 'Google Login failed', 'error');
@@ -98,6 +132,14 @@ export default function LoginPage() {
       email: customEmail,
       name: userName
     });
+  };
+
+  const handleContinueWithGoogleClick = () => {
+    try {
+      triggerRealGoogleLogin();
+    } catch (err) {
+      setShowGoogleModal(true);
+    }
   };
 
   return (
@@ -224,7 +266,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     className="google-btn"
-                    onClick={() => setShowGoogleModal(true)}
+                    onClick={handleContinueWithGoogleClick}
                     disabled={googleLoading || loading}
                   >
                     {googleLoading ? (
