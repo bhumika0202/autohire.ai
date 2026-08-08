@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bookmark, SlidersHorizontal, ChevronDown, Briefcase, ExternalLink } from 'lucide-react';
+import { Search, Bookmark, SlidersHorizontal, ChevronDown, Briefcase } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import './JobsPage.css';
@@ -19,7 +19,7 @@ const formatSalaryLPA = (salaryStr, index) => {
 
 const DEFAULT_MATCH_JOBS = [
   {
-    id: 'linkedin-1',
+    id: '1',
     title: 'Senior MERN Stack Engineer',
     company: 'Microsoft',
     location: 'Bangalore / Remote',
@@ -28,12 +28,11 @@ const DEFAULT_MATCH_JOBS = [
     skills: ['React', 'Node.js', 'MongoDB', 'TypeScript'],
     logo_bg: 'bg-blue',
     logo_text: 'M',
-    source: 'LinkedIn',
     saved: true
   },
   {
-    id: 'naukri-1',
-    title: 'Full Stack Web Developer (React + Node)',
+    id: '2',
+    title: 'Full Stack Web Developer',
     company: 'Infosys',
     location: 'Ahmedabad / Pune',
     match_score: 92,
@@ -41,11 +40,10 @@ const DEFAULT_MATCH_JOBS = [
     skills: ['React', 'Node.js', 'Express', 'MongoDB'],
     logo_bg: 'bg-indigo',
     logo_text: 'I',
-    source: 'Naukri.com',
     saved: false
   },
   {
-    id: 'linkedin-2',
+    id: '3',
     title: 'Frontend React.js Specialist',
     company: 'Amazon',
     location: 'Hyderabad / Remote',
@@ -54,11 +52,10 @@ const DEFAULT_MATCH_JOBS = [
     skills: ['React', 'JavaScript', 'TypeScript', 'Redux'],
     logo_bg: 'bg-orange',
     logo_text: 'A',
-    source: 'LinkedIn',
     saved: true
   },
   {
-    id: 'naukri-2',
+    id: '4',
     title: 'Backend Developer (Node.js & PostgreSQL)',
     company: 'TCS',
     location: 'Gandhinagar / Mumbai',
@@ -67,7 +64,6 @@ const DEFAULT_MATCH_JOBS = [
     skills: ['Node.js', 'Express', 'PostgreSQL', 'Prisma'],
     logo_bg: 'bg-blue-dark',
     logo_text: 'T',
-    source: 'Naukri.com',
     saved: false
   }
 ];
@@ -80,7 +76,6 @@ export default function JobsPage() {
   const [search, setSearch] = useState('');
   const [experienceFilter, setExperienceFilter] = useState('all');
   const [locationFilter, setLocationFilter] = useState('all');
-  const [sourceFilter, setSourceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('match');
   const [savedJobs, setSavedJobs] = useState({});
 
@@ -91,7 +86,6 @@ export default function JobsPage() {
         search,
         location: locationFilter,
         experience: experienceFilter,
-        source: sourceFilter,
         sort: sortBy
       });
       if (data.jobs && data.jobs.length > 0) {
@@ -109,7 +103,7 @@ export default function JobsPage() {
     }
   };
 
-  useEffect(() => { loadJobs(); }, [sortBy, locationFilter, experienceFilter, sourceFilter]);
+  useEffect(() => { loadJobs(); }, [sortBy, locationFilter, experienceFilter]);
 
   const handleSave = async (e, jobId) => {
     e.stopPropagation();
@@ -130,7 +124,7 @@ export default function JobsPage() {
         <h1 className="jobs-main-title">
           <span className="blue-text">Job</span> Matches
         </h1>
-        <p className="jobs-sub-title">Find live jobs from LinkedIn, Naukri, & top tech companies</p>
+        <p className="jobs-sub-title">Find jobs that match your profile</p>
       </div>
 
       {/* Single-Row Search & Filter Bar */}
@@ -139,21 +133,11 @@ export default function JobsPage() {
           <Search size={16} className="search-icon" />
           <input
             type="text"
-            placeholder="Search LinkedIn & Naukri jobs..."
+            placeholder="Search jobs..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && loadJobs()}
           />
-        </div>
-
-        {/* Source Filter (LinkedIn / Naukri) */}
-        <div className="filter-dropdown-box">
-          <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}>
-            <option value="all">All Sources</option>
-            <option value="linkedin">LinkedIn</option>
-            <option value="naukri">Naukri.com</option>
-          </select>
-          <ChevronDown size={14} className="dropdown-arrow" />
         </div>
 
         <div className="filter-dropdown-box">
@@ -216,14 +200,7 @@ export default function JobsPage() {
 
                 {/* Info */}
                 <div className="job-item-info">
-                  <div className="job-title-row">
-                    <h3 className="job-item-title">{job.title}</h3>
-                    {job.source && (
-                      <span className={`source-badge ${job.source.toLowerCase().includes('naukri') ? 'naukri' : 'linkedin'}`}>
-                        {job.source}
-                      </span>
-                    )}
-                  </div>
+                  <h3 className="job-item-title">{job.title}</h3>
                   <div className="job-item-company">{job.company}</div>
                   <div className="job-item-location">{job.location}</div>
                 </div>

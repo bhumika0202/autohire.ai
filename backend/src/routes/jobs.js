@@ -288,7 +288,7 @@ router.get('/:id', authenticate, async (req, res) => {
       ? Math.round((matchingSkills.length / Math.max(jobSkills.length, 1)) * 100)
       : 75, 72), 98);
 
-    const aiExplanation = `Your profile demonstrates strong alignment with ${job.company}'s requirements for ${job.title}. Your skills in ${matchingSkills.slice(0,3).join(', ') || 'software engineering'} match key technical prerequisites for this role.`;
+    const aiExplanation = `Your profile demonstrates strong alignment with ${job.company}'s requirements for ${job.title}. Your skills in ${matchingSkills.slice(0, 3).join(', ') || 'software engineering'} match key technical prerequisites for this role.`;
 
     res.json({
       job: {
