@@ -18,6 +18,12 @@ const upload = multer({
   }
 });
 
+// Helper to strip null bytes (0x00) for PostgreSQL UTF-8 compatibility
+const sanitizeUtf8 = (str) => {
+  if (typeof str !== 'string') return '';
+  return str.replace(/\0/g, '').replace(/\u0000/g, '').replace(/[\uFFFD\uFFFE\uFFFF]/g, '');
+};
+
 // Comprehensive list of tech skills to scan in candidate PDF
 const KNOWN_SKILLS = [
   'React', 'React.js', 'Node.js', 'Express', 'Express.js', 'MongoDB', 'PostgreSQL', 'MySQL', 'SQL',
@@ -27,30 +33,32 @@ const KNOWN_SKILLS = [
   'Spring Boot', 'Django', 'Flask', 'Flutter', 'React Native', 'Linux', 'Agile', 'Jira'
 ];
 
-// Scan PDF buffer reliably without type errors
+// Scan PDF buffer reliably & sanitize null bytes for PostgreSQL
 const scanPdfResume = async (fileBuffer, filename) => {
-  let extractedText = '';
+  let rawText = '';
   try {
     if (typeof pdfLib === 'function') {
       const data = await pdfLib(fileBuffer);
-      extractedText = data?.text || '';
+      rawText = data?.text || '';
     } else if (pdfLib && typeof pdfLib.PDFParse === 'function') {
       const parser = new pdfLib.PDFParse(fileBuffer);
       if (typeof parser.extractText === 'function') {
         const res = await parser.extractText();
-        extractedText = typeof res === 'string' ? res : (res?.text || '');
+        rawText = typeof res === 'string' ? res : (res?.text || '');
       } else {
-        extractedText = fileBuffer.toString('utf-8');
+        rawText = fileBuffer.toString('utf-8');
       }
     } else {
-      extractedText = fileBuffer.toString('utf-8');
+      rawText = fileBuffer.toString('utf-8');
     }
   } catch (err) {
     console.warn('PDF Parsing fallback to raw text buffer scan:', err.message);
-    extractedText = fileBuffer ? fileBuffer.toString('utf-8') : '';
+    rawText = fileBuffer ? fileBuffer.toString('utf-8') : '';
   }
 
-  const textLower = (extractedText || '').toLowerCase();
+  // Strip null bytes (0x00) to ensure 100% PostgreSQL UTF-8 compliance
+  const extractedText = sanitizeUtf8(rawText);
+  const textLower = extractedText.toLowerCase();
 
   // 1. Detect Real Skills from Document
   const foundSkills = KNOWN_SKILLS.filter(skill => {
@@ -63,17 +71,17 @@ const scanPdfResume = async (fileBuffer, filename) => {
     if (s.toLowerCase() === 'express.js') return 'Express.js';
     if (s.toLowerCase() === 'html5') return 'HTML';
     if (s.toLowerCase() === 'css3') return 'CSS';
-    return s;
+    return sanitizeUtf8(s);
   })));
 
   // 2. Extract Summary Lines
-  const cleanLines = (extractedText || '')
+  const cleanLines = extractedText
     .split('\n')
-    .map(l => l.trim())
+    .map(l => sanitizeUtf8(l.trim()))
     .filter(l => l.length > 15 && !l.includes('Page ') && !l.includes('http'));
 
   const aboutSummary = cleanLines.slice(0, 3).join(' ') ||
-    `Scanned resume "${filename}". Technical candidate skilled in ${uniqueSkills.slice(0, 4).join(', ') || 'Software Development'}.`;
+    `Scanned resume "${sanitizeUtf8(filename)}". Technical candidate skilled in ${uniqueSkills.slice(0, 4).join(', ') || 'Software Development'}.`;
 
   // 3. Extract Experience & Projects
   const expLines = cleanLines.filter(l =>
@@ -85,10 +93,10 @@ const scanPdfResume = async (fileBuffer, filename) => {
   );
 
   const parsedExperience = expLines.slice(0, 3).map(line => ({
-    title: line.length > 50 ? line.slice(0, 48) + '...' : line,
+    title: sanitizeUtf8(line.length > 50 ? line.slice(0, 48) + '...' : line),
     company: 'Scanned Organization',
     duration: 'Scanned Timeline',
-    description: `Parsed from uploaded resume: ${line}`
+    description: sanitizeUtf8(`Parsed from uploaded resume: ${line}`)
   }));
 
   const projLines = cleanLines.filter(l =>
@@ -99,13 +107,13 @@ const scanPdfResume = async (fileBuffer, filename) => {
   );
 
   const parsedProjects = projLines.slice(0, 3).map(line => ({
-    name: line.length > 45 ? line.slice(0, 42) + '...' : line,
-    desc: `Scanned project details from ${filename}`,
-    tech: uniqueSkills.slice(0, 4).join(', ')
+    name: sanitizeUtf8(line.length > 45 ? line.slice(0, 42) + '...' : line),
+    desc: sanitizeUtf8(`Scanned project details from ${filename}`),
+    tech: sanitizeUtf8(uniqueSkills.slice(0, 4).join(', '))
   }));
 
   return {
-    about: aboutSummary,
+    about: sanitizeUtf8(aboutSummary),
     skills: uniqueSkills.length > 0 ? uniqueSkills : ['JavaScript', 'Software Development'],
     experience: parsedExperience,
     projects: parsedProjects
@@ -120,6 +128,7 @@ router.post('/upload', authenticate, upload.single('resume'), async (req, res) =
     }
 
     const scanned = await scanPdfResume(req.file.buffer, req.file.originalname);
+    const cleanFilename = sanitizeUtf8(req.file.originalname);
 
     // Ensure database user exists before upserting career profile
     let dbUser = await prisma.user.findUnique({ where: { id: req.user.id } });
@@ -147,8 +156,8 @@ router.post('/upload', authenticate, upload.single('resume'), async (req, res) =
         experience: scanned.experience,
         projects: scanned.projects,
         targetRoles: scanned.skills.slice(0, 3).map(s => `${s} Developer`),
-        resumeUrl: `uploads/${req.file.originalname}`,
-        aiSummary: `Scanned ${scanned.skills.length} technical skills from ${req.file.originalname}`
+        resumeUrl: `uploads/${cleanFilename}`,
+        aiSummary: `Scanned ${scanned.skills.length} technical skills from ${cleanFilename}`
       },
       create: {
         userId: targetUserId,
@@ -157,8 +166,8 @@ router.post('/upload', authenticate, upload.single('resume'), async (req, res) =
         experience: scanned.experience,
         projects: scanned.projects,
         targetRoles: scanned.skills.slice(0, 3).map(s => `${s} Developer`),
-        resumeUrl: `uploads/${req.file.originalname}`,
-        aiSummary: `Scanned ${scanned.skills.length} technical skills from ${req.file.originalname}`
+        resumeUrl: `uploads/${cleanFilename}`,
+        aiSummary: `Scanned ${scanned.skills.length} technical skills from ${cleanFilename}`
       }
     });
 
