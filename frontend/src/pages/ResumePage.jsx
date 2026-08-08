@@ -319,11 +319,11 @@ export default function ResumePage() {
                     <div className="timeline-dot" />
                     <div className="timeline-content">
                       <div className="timeline-header-row">
-                        <h4 className="timeline-role">{exp.title || typeof exp === 'string' ? exp : 'Software Engineer'}</h4>
-                        <span className="timeline-date">{exp.duration || 'Present'}</span>
+                        <h4 className="timeline-role">{typeof exp === 'string' ? exp : (exp?.title || 'Software Engineer')}</h4>
+                        <span className="timeline-date">{exp?.duration || 'Present'}</span>
                       </div>
-                      <div className="timeline-company">{exp.company || 'Tech Organization'}</div>
-                      <p className="timeline-desc">{exp.description || 'Delivered web features and REST microservices.'}</p>
+                      <div className="timeline-company">{exp?.company || 'Tech Organization'}</div>
+                      <p className="timeline-desc">{exp?.description || 'Delivered web features and REST microservices.'}</p>
                     </div>
                   </div>
                 ))}
@@ -341,7 +341,7 @@ export default function ResumePage() {
                 {projectList.map((proj, i) => (
                   <div key={i} className="project-fancy-card">
                     <div className="project-top-row">
-                      <h4 className="project-name">{proj.name || (typeof proj === 'string' ? proj : 'Project')}</h4>
+                      <h4 className="project-name">{typeof proj === 'string' ? proj : (proj?.name || 'Project')}</h4>
                       <ArrowUpRight size={16} className="project-arrow" />
                     </div>
                     {proj.desc && <p className="project-desc">{proj.desc}</p>}
