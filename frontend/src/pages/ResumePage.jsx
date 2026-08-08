@@ -272,18 +272,20 @@ export default function ResumePage() {
       ) : (
         /* Dynamic Extracted Career Profile View */
         <div className="extracted-profile-view animate-fade-in">
-          <div className="extracted-profile-header">
-            <div>
+          <div className="extracted-profile-header-card card">
+            <div className="extracted-header-left">
               <div className="extracted-badge">
                 <CheckCircle2 size={13} /> VERIFIED AI EXTRACTION
               </div>
-              <h2>AI Extracted Career Profile</h2>
-              <p>Generated from {file?.name || 'your uploaded resume'}</p>
+              <h2 className="extracted-title">AI Extracted Career Profile</h2>
+              <p className="extracted-subtitle">Generated from {file?.name || 'your uploaded resume'}</p>
             </div>
 
-            <button className="btn btn-secondary" onClick={() => setStep(-1)}>
-              <Upload size={14} /> Re-upload Resume
-            </button>
+            <div className="extracted-header-right">
+              <button className="btn btn-secondary" onClick={() => setStep(-1)}>
+                <Upload size={14} /> Re-upload Resume
+              </button>
+            </div>
           </div>
 
           <div className="profile-grid">

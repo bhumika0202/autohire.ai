@@ -372,14 +372,25 @@
 .extracted-profile-view {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
-.extracted-profile-header {
+.extracted-profile-header-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  padding: 24px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 0;
+  gap: 24px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.02);
+}
+
+.extracted-header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .extracted-badge {
@@ -395,15 +406,24 @@
   margin-bottom: 6px;
 }
 
-.extracted-profile-header h2 {
+.extracted-title {
   font-size: 22px;
   font-weight: 800;
   color: #0F172A;
+  letter-spacing: -0.5px;
+  margin-bottom: 2px;
 }
 
-.extracted-profile-header p {
+.extracted-subtitle {
   font-size: 13px;
   color: #64748B;
+}
+
+.extracted-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 /* Profile Grid */
