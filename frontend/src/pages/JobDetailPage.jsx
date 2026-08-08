@@ -39,9 +39,13 @@ export default function JobDetailPage() {
         job_id: id,
         status: 'applied',
         job_title: job?.title,
-        company: job?.company
+        company: job?.company,
+        location: job?.location,
+        salary_range: job?.salary_range,
+        skills: job?.skills,
+        url: job?.url
       });
-      addToast(`Application receipt sent to your email! Opening official application form...`, 'success');
+      addToast(`Application recorded for ${job?.company}! Redirecting to official application form...`, 'success');
 
       if (job?.url) {
         window.open(job.url, '_blank', 'noopener,noreferrer');

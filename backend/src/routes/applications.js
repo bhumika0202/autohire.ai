@@ -46,7 +46,7 @@ router.get('/', authenticate, async (req, res) => {
       created_at: app.createdAt,
       updated_at: app.updatedAt,
       job_title: app.job?.title || 'Software Engineer',
-      company: app.job?.company || 'Enterprise',
+      company: app.job?.company || 'Tech Enterprise',
       location: app.job?.location || 'India',
       employment_type: app.job?.employmentType || 'Full-time',
       salary_range: app.job?.salaryRange || '₹10 - 18 LPA',
@@ -60,25 +60,32 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-// Create application (save/apply job - supports live & DB jobs + Gmail SMTP Receipt)
+// Create application (save/apply job - dynamically handles real live company names & roles)
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { job_id, status = 'saved', job_title, company } = req.body;
+    const { job_id, status = 'saved', job_title, company, location, salary_range, skills, url } = req.body;
     if (!job_id) return res.status(400).json({ error: 'job_id is required' });
 
     let job = await prisma.job.findUnique({ where: { id: job_id } });
+
+    // Extract dynamic title/company name or fallback to clean real-world title
+    const realTitle = job_title || 'Software Development Engineer';
+    const realCompany = company || 'Tech Enterprise';
+    const realLocation = location || 'Bangalore, India • Remote';
+    const realSalary = salary_range || '₹14 - 24 LPA';
+    const realSkills = Array.isArray(skills) && skills.length > 0 ? skills : ['React', 'Node.js', 'JavaScript'];
 
     if (!job) {
       job = await prisma.job.create({
         data: {
           id: job_id,
-          title: job_title || 'Software Development Engineer',
-          company: company || 'Tech Enterprise',
-          location: 'Bangalore, India',
+          title: realTitle,
+          company: realCompany,
+          location: realLocation,
           employmentType: 'Full-time',
-          salaryRange: '₹12 - 20 LPA',
-          description: 'Live Software Engineering role',
-          skills: ['React', 'Node.js', 'JavaScript'],
+          salaryRange: realSalary,
+          description: `Live software development opening at ${realCompany}.`,
+          skills: realSkills,
           experienceLevel: 'Mid-Level',
           isActive: true
         }
@@ -123,7 +130,7 @@ router.post('/', authenticate, async (req, res) => {
 
     const profile = await prisma.careerProfile.findUnique({ where: { userId: req.user.id } });
     const userSkills = profile?.skills || ['React', 'Node.js', 'JavaScript'];
-    const jobSkills = job.skills || ['React', 'Node.js', 'JavaScript'];
+    const jobSkills = job.skills || realSkills;
 
     const matchingSkills = jobSkills.filter(s => userSkills.some(us => us.toLowerCase() === s.toLowerCase()));
     const missingSkills = jobSkills.filter(s => !userSkills.some(us => us.toLowerCase() === s.toLowerCase()));
@@ -143,7 +150,6 @@ router.post('/', authenticate, async (req, res) => {
       }
     });
 
-    // Send instant email confirmation receipt if status is APPLIED
     if (dbStatus === 'APPLIED' && req.user.email) {
       sendApplicationConfirmationEmail({
         email: req.user.email,
