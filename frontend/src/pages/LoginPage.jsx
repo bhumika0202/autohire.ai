@@ -1,9 +1,30 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail, ShieldCheck, Loader } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, Loader, User, Plus, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import './LoginPage.css';
+
+const MOCK_GOOGLE_ACCOUNTS = [
+  {
+    name: 'Hitesh Vaishnav',
+    email: 'hiteshvaishnav602@gmail.com',
+    initial: 'H',
+    bg: '#2563EB'
+  },
+  {
+    name: 'Hitesh Sharma',
+    email: 'hitesh@gmail.com',
+    initial: 'H',
+    bg: '#16A34A'
+  },
+  {
+    name: 'Bhumika',
+    email: 'bhumika.autohire@gmail.com',
+    initial: 'B',
+    bg: '#9333EA'
+  }
+];
 
 export default function LoginPage() {
   const [mode, setMode] = useState('login'); // 'login' or 'register'
@@ -13,6 +34,12 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Google Account Picker State
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [customEmail, setCustomEmail] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
+
   const { login, register, googleLogin } = useAuth();
   const addToast = useToast();
   const navigate = useNavigate();
@@ -42,20 +69,35 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleSelectGoogleAccount = async (account) => {
     setGoogleLoading(true);
+    setShowGoogleModal(false);
     try {
       const res = await googleLogin({
-        email: 'hiteshvaishnav602@gmail.com',
-        name: 'Hitesh Vaishnav'
+        email: account.email,
+        name: account.name
       });
-      addToast(res.message || 'Google Login successful! Welcome email sent.', 'success');
+      addToast(`Logged in as ${account.email}! Welcome email sent.`, 'success');
       navigate('/dashboard');
     } catch (err) {
       addToast(err.message || 'Google Login failed', 'error');
     } finally {
       setGoogleLoading(false);
     }
+  };
+
+  const handleCustomGoogleSubmit = async (e) => {
+    e.preventDefault();
+    if (!customEmail || !customEmail.includes('@')) {
+      addToast('Please enter a valid Google email address', 'error');
+      return;
+    }
+
+    const userName = customEmail.split('@')[0].replace('.', ' ').toUpperCase();
+    await handleSelectGoogleAccount({
+      email: customEmail,
+      name: userName
+    });
   };
 
   return (
@@ -182,7 +224,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     className="google-btn"
-                    onClick={handleGoogleLogin}
+                    onClick={() => setShowGoogleModal(true)}
                     disabled={googleLoading || loading}
                   >
                     {googleLoading ? (
@@ -216,6 +258,79 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* Google Account Selector Dialog Modal */}
+      {showGoogleModal && (
+        <div className="google-modal-overlay animate-fade-in" onClick={() => setShowGoogleModal(false)}>
+          <div className="google-modal-dialog" onClick={e => e.stopPropagation()}>
+            <button className="google-modal-close" onClick={() => setShowGoogleModal(false)}>
+              <X size={18} />
+            </button>
+
+            <div className="google-modal-header">
+              <svg width="24" height="24" viewBox="0 0 18 18">
+                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.616z"/>
+                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+              </svg>
+              <h2>Choose an account</h2>
+              <p>to continue to <strong>Autohire.ai</strong></p>
+            </div>
+
+            <div className="google-accounts-list">
+              {MOCK_GOOGLE_ACCOUNTS.map((acc, index) => (
+                <div
+                  key={index}
+                  className="google-account-row"
+                  onClick={() => handleSelectGoogleAccount(acc)}
+                >
+                  <div className="account-avatar-box" style={{ background: acc.bg }}>
+                    {acc.initial}
+                  </div>
+                  <div className="account-info-box">
+                    <div className="account-name">{acc.name}</div>
+                    <div className="account-email">{acc.email}</div>
+                  </div>
+                </div>
+              ))}
+
+              {showCustomInput ? (
+                <form onSubmit={handleCustomGoogleSubmit} className="custom-google-form">
+                  <input
+                    type="email"
+                    placeholder="Enter Google email ID..."
+                    value={customEmail}
+                    onChange={e => setCustomEmail(e.target.value)}
+                    autoFocus
+                    required
+                  />
+                  <button type="submit" className="custom-submit-btn">
+                    Sign in
+                  </button>
+                </form>
+              ) : (
+                <div
+                  className="google-account-row add-account"
+                  onClick={() => setShowCustomInput(true)}
+                >
+                  <div className="account-avatar-box add-icon-bg">
+                    <Plus size={18} />
+                  </div>
+                  <div className="account-info-box">
+                    <div className="account-name font-bold">Use another account</div>
+                    <div className="account-email">Sign in with a different Google email</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="google-modal-footer">
+              <p>To continue, Google will share your name, email address, and profile picture with Autohire.ai.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
