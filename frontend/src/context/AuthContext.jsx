@@ -32,6 +32,14 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const googleLogin = async (dataPayload = {}) => {
+    const data = await api.googleLogin(dataPayload);
+    localStorage.setItem('careerpilot_token', data.token);
+    localStorage.setItem('careerpilot_user', JSON.stringify(data.user));
+    setUser(data.user);
+    return data;
+  };
+
   const register = async (name, email, password) => {
     const data = await api.register({ name, email, password });
     localStorage.setItem('careerpilot_token', data.token);
@@ -47,7 +55,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, updateUser, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, updateUser, login, googleLogin, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

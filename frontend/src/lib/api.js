@@ -29,6 +29,7 @@ export const api = {
   // Auth
   register: (data) => request('/auth/register', { method: 'POST', body: data }),
   login: (data) => request('/auth/login', { method: 'POST', body: data }),
+  googleLogin: (data = {}) => request('/auth/google', { method: 'POST', body: data }),
   getMe: () => request('/auth/me'),
 
   // Profile & Avatar

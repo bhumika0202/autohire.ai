@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma from '../db/prisma.js';
+import { sendWelcomeEmail } from '../services/mailer.js';
 
 const router = express.Router();
 
@@ -47,6 +48,9 @@ router.post('/register', async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    // Send Welcome Email asynchronously
+    sendWelcomeEmail({ email: user.email, name: user.name }).catch(console.error);
+
     res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, avatar_url: user.avatarUrl } });
   } catch (err) {
     console.error('Register error:', err);
@@ -85,6 +89,67 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Google Authentication ("Continue with Google")
+router.post('/google', async (req, res) => {
+  try {
+    const { email = 'hiteshvaishnav602@gmail.com', name = 'Hitesh Vaishnav', avatar_url } = req.body;
+
+    let user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    let isNewUser = false;
+
+    if (!user) {
+      isNewUser = true;
+      const dummyPasswordHash = await bcrypt.hash(`google_oauth_${Date.now()}`, 10);
+      user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          passwordHash: dummyPasswordHash,
+          avatarUrl: avatar_url || null,
+          careerProfile: {
+            create: {
+              about: 'MERN Stack Developer passionate about building high-performance web applications.',
+              targetRoles: ['MERN Stack Developer', 'Full Stack Developer'],
+              skills: ['React', 'Node.js', 'Express.js', 'MongoDB', 'JavaScript']
+            }
+          }
+        }
+      });
+    } else if (avatar_url && !user.avatarUrl) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { avatarUrl: avatar_url }
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, name: user.name },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Send Welcome Email if new Google user
+    sendWelcomeEmail({ email: user.email, name: user.name }).catch(console.error);
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        avatar_url: user.avatarUrl
+      },
+      message: isNewUser ? 'Google Sign-in successful! Welcome email sent.' : 'Google Sign-in successful!'
+    });
+  } catch (err) {
+    console.error('Google login error:', err);
+    res.status(500).json({ error: 'Google login failed' });
   }
 });
 

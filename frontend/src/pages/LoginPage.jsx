@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, User, Mail, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import './LoginPage.css';
@@ -12,7 +12,8 @@ export default function LoginPage() {
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login, register } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const { login, register, googleLogin } = useAuth();
   const addToast = useToast();
   const navigate = useNavigate();
 
@@ -22,22 +23,38 @@ export default function LoginPage() {
 
     try {
       if (mode === 'login') {
-        await login(form.email || 'hitesh@gmail.com', form.password || 'password123');
-        addToast('Welcome back!', 'success');
+        await login(form.email || 'hiteshvaishnav602@gmail.com', form.password || 'password123');
+        addToast('Welcome back to Autohire.ai!', 'success');
       } else {
         if (form.password && form.password !== form.confirmPassword) {
           addToast('Passwords do not match', 'error');
           setLoading(false);
           return;
         }
-        await register(form.name || 'Hitesh Sharma', form.email || 'hitesh@gmail.com', form.password || 'password123');
-        addToast('Account created successfully!', 'success');
+        await register(form.name || 'Hitesh Vaishnav', form.email || 'hiteshvaishnav602@gmail.com', form.password || 'password123');
+        addToast('Account created! Welcome email sent to your inbox.', 'success');
       }
       navigate('/dashboard');
     } catch (err) {
       addToast(err.message || 'Authentication failed', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    try {
+      const res = await googleLogin({
+        email: 'hiteshvaishnav602@gmail.com',
+        name: 'Hitesh Vaishnav'
+      });
+      addToast(res.message || 'Google Login successful! Welcome email sent.', 'success');
+      navigate('/dashboard');
+    } catch (err) {
+      addToast(err.message || 'Google Login failed', 'error');
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -81,7 +98,7 @@ export default function LoginPage() {
                   <label>Full name</label>
                   <input
                     type="text"
-                    placeholder="Hitesh Sharma"
+                    placeholder="Hitesh Vaishnav"
                     value={form.name}
                     onChange={e => setForm({ ...form, name: e.target.value })}
                   />
@@ -92,7 +109,7 @@ export default function LoginPage() {
                 <label>Email address</label>
                 <input
                   type="email"
-                  placeholder="hitesh@gmail.com"
+                  placeholder="hiteshvaishnav602@gmail.com"
                   value={form.email}
                   onChange={e => setForm({ ...form, email: e.target.value })}
                   required
@@ -152,7 +169,7 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <button type="submit" className="auth-submit-btn" disabled={loading}>
+              <button type="submit" className="auth-submit-btn" disabled={loading || googleLoading}>
                 {loading ? 'Please wait...' : mode === 'login' ? 'Login' : 'Create account'}
               </button>
 
@@ -165,18 +182,25 @@ export default function LoginPage() {
                   <button
                     type="button"
                     className="google-btn"
-                    onClick={() => {
-                      addToast('Google login simulated!', 'success');
-                      login('hitesh@gmail.com', 'password123').then(() => navigate('/dashboard'));
-                    }}
+                    onClick={handleGoogleLogin}
+                    disabled={googleLoading || loading}
                   >
-                    <svg width="18" height="18" viewBox="0 0 18 18">
-                      <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.616z"/>
-                      <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-                      <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
-                      <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-                    </svg>
-                    <span>Continue with Google</span>
+                    {googleLoading ? (
+                      <>
+                        <Loader size={16} className="animate-spin" />
+                        <span>Signing in with Google...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg width="18" height="18" viewBox="0 0 18 18">
+                          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.616z"/>
+                          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                          <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+                          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+                        </svg>
+                        <span>Continue with Google</span>
+                      </>
+                    )}
                   </button>
                 </>
               )}
