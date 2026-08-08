@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, MessageSquare, Menu, User, Settings, LogOut, Check, X, Sparkles, Send, Bot, ExternalLink, Briefcase } from 'lucide-react';
+import { Search, Bell, MessageSquare, Menu, User, Settings, LogOut, Check, X, Sparkles, Send, Bot, ArrowRight, FileText, Briefcase, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import './TopHeader.css';
@@ -40,6 +40,13 @@ const QUICK_SEARCH_SUGGESTIONS = [
   { label: 'Ahmedabad', category: 'Location' }
 ];
 
+const QUICK_AI_PROMPTS = [
+  '🚀 How to increase match score to 95%?',
+  '💰 MERN Developer salary trend in India?',
+  '📝 Help optimize my resume summary',
+  '🎯 React & Node.js interview prep'
+];
+
 export default function TopHeader({ onMenuClick }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -53,13 +60,20 @@ export default function TopHeader({ onMenuClick }) {
 
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
   const [chatMessages, setChatMessages] = useState([
-    { id: 1, sender: 'ai', text: 'Hello Hitesh! 👋 How can I help with your job search today?' }
+    {
+      id: 1,
+      sender: 'ai',
+      text: 'Hello Hitesh! 👋 I am your Autohire.ai Career Assistant. How can I accelerate your job search today?',
+      action: { label: 'Explore 24 Job Matches →', link: '/jobs' }
+    }
   ]);
   const [chatInput, setChatInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
 
   const searchRef = useRef(null);
   const notifRef = useRef(null);
   const userRef = useRef(null);
+  const chatMessagesEndRef = useRef(null);
 
   const initials = user?.name
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -67,7 +81,10 @@ export default function TopHeader({ onMenuClick }) {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Close popups when clicking outside
+  useEffect(() => {
+    chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, isTyping]);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (searchRef.current && !searchRef.current.contains(e.target)) setShowSearchDropdown(false);
@@ -103,28 +120,42 @@ export default function TopHeader({ onMenuClick }) {
     navigate('/login');
   };
 
-  const handleSendChatMessage = (e) => {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
+  const sendQueryToAi = (userText) => {
+    if (!userText.trim()) return;
 
-    const userMsg = { id: Date.now(), sender: 'user', text: chatInput };
+    const userMsg = { id: Date.now(), sender: 'user', text: userText };
     setChatMessages(prev => [...prev, userMsg]);
-    const query = chatInput.toLowerCase();
-    setChatInput('');
+    setIsTyping(true);
 
-    // Instant AI Response logic
+    const query = userText.toLowerCase();
+
     setTimeout(() => {
-      let aiText = 'Based on your career profile, focusing on MERN stack projects with React and Node.js will significantly increase your match rate for top tech roles!';
-      if (query.includes('resume')) {
-        aiText = 'Your uploaded resume has a strong 92% match for Full Stack roles! Make sure to highlight your PPMS procurement system project.';
-      } else if (query.includes('salary') || query.includes('pay')) {
-        aiText = 'For MERN Stack Developers in India with 1-3 years experience, typical salary ranges are between ₹6 LPA to ₹12 LPA.';
-      } else if (query.includes('interview')) {
-        aiText = 'For your upcoming interview, review React hooks (useEffect, useMemo), Node.js Event Loop, REST API design, and MongoDB indexing.';
+      let aiText = 'Based on your career profile, focusing on MERN stack projects with React, Node.js, and Express will significantly increase your match score for top engineering roles!';
+      let action = { label: 'View Top Job Matches →', link: '/jobs' };
+
+      if (query.includes('match') || query.includes('95%') || query.includes('score')) {
+        aiText = 'To boost your AI Match Score to 95%+:\n1. Add Docker & AWS Deployment experience\n2. Highlight REST API optimization in your PPMS project\n3. Include TypeScript & Prisma ORM in your core skills.';
+        action = { label: 'Update Career Profile →', link: '/profile' };
+      } else if (query.includes('salary') || query.includes('pay') || query.includes('trend')) {
+        aiText = 'MERN Stack Developer Salary Trends in India (2026):\n• Junior (0-2 yrs): ₹5 LPA - ₹9 LPA\n• Mid-Level (2-5 yrs): ₹8 LPA - ₹15 LPA\n• Senior (5+ yrs): ₹16 LPA - ₹28 LPA+';
+        action = { label: 'Explore High Paying Jobs →', link: '/jobs' };
+      } else if (query.includes('resume') || query.includes('summary')) {
+        aiText = 'Your resume is analyzed! Here is a recommended 1-line professional summary:\n"Passionate MERN Stack Developer with experience building scalable React frontends and Node.js REST APIs with MongoDB & PostgreSQL."';
+        action = { label: 'Go to My Resume →', link: '/resume' };
+      } else if (query.includes('interview') || query.includes('prep')) {
+        aiText = 'Key React & Node.js Interview Prep Topics:\n1. Event Loop & Async/Await in Node.js\n2. React Virtual DOM & Reconciliation\n3. MongoDB Indexing & Aggregation Pipelines\n4. JWT Authentication & Refresh Tokens';
+        action = { label: 'Generate Cover Letter →', link: '/cover-letter' };
       }
 
-      setChatMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: aiText }]);
-    }, 600);
+      setIsTyping(false);
+      setChatMessages(prev => [...prev, { id: Date.now() + 1, sender: 'ai', text: aiText, action }]);
+    }, 700);
+  };
+
+  const handleSendChatMessage = (e) => {
+    e.preventDefault();
+    sendQueryToAi(chatInput);
+    setChatInput('');
   };
 
   return (
@@ -264,16 +295,20 @@ export default function TopHeader({ onMenuClick }) {
         </div>
       </header>
 
-      {/* AI Career Assistant Slide-Out Drawer Modal */}
+      {/* Upgraded AI Career Assistant Slide-Out Drawer Modal */}
       {showAiChat && (
         <div className="ai-chat-drawer-overlay animate-fade-in" onClick={() => setShowAiChat(false)}>
           <div className="ai-chat-drawer-container" onClick={e => e.stopPropagation()}>
+            {/* Header Banner */}
             <div className="ai-chat-drawer-header">
               <div className="ai-title-wrap">
-                <Bot size={20} className="ai-bot-icon" />
+                <div className="ai-bot-avatar">
+                  <Bot size={22} />
+                  <span className="online-dot" />
+                </div>
                 <div>
-                  <h3>AI Career Assistant</h3>
-                  <p>Ask anything about jobs, resume or salary</p>
+                  <h3>Autohire.ai Career Agent</h3>
+                  <p>Deep AI Career Intelligence</p>
                 </div>
               </div>
               <button className="close-drawer-btn" onClick={() => setShowAiChat(false)}>
@@ -281,18 +316,70 @@ export default function TopHeader({ onMenuClick }) {
               </button>
             </div>
 
+            {/* Quick Prompts Bar */}
+            <div className="quick-prompts-bar">
+              <div className="quick-prompts-title"><Sparkles size={12} /> Suggested Questions</div>
+              <div className="quick-prompts-scroll">
+                {QUICK_AI_PROMPTS.map((promptText, idx) => (
+                  <button key={idx} className="prompt-chip-btn" onClick={() => sendQueryToAi(promptText)}>
+                    {promptText}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Messages Box */}
             <div className="ai-chat-messages-box">
               {chatMessages.map(msg => (
                 <div key={msg.id} className={`chat-bubble-row ${msg.sender}`}>
-                  <div className="chat-bubble">{msg.text}</div>
+                  <div className="chat-bubble">
+                    <p style={{ whiteSpace: 'pre-line' }}>{msg.text}</p>
+
+                    {msg.action && (
+                      <button
+                        className="chat-action-btn"
+                        onClick={() => {
+                          navigate(msg.action.link);
+                          setShowAiChat(false);
+                        }}
+                      >
+                        {msg.action.label}
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
+
+              {isTyping && (
+                <div className="chat-bubble-row ai">
+                  <div className="chat-bubble typing">
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                  </div>
+                </div>
+              )}
+              <div ref={chatMessagesEndRef} />
             </div>
 
+            {/* Quick Navigation Shortcuts */}
+            <div className="chat-shortcuts-row">
+              <button onClick={() => { navigate('/resume'); setShowAiChat(false); }}>
+                <FileText size={13} /> Resume
+              </button>
+              <button onClick={() => { navigate('/jobs'); setShowAiChat(false); }}>
+                <Briefcase size={13} /> Jobs
+              </button>
+              <button onClick={() => { navigate('/cover-letter'); setShowAiChat(false); }}>
+                <Sparkles size={13} /> Cover Letter
+              </button>
+            </div>
+
+            {/* Input Bar */}
             <form onSubmit={handleSendChatMessage} className="ai-chat-input-bar">
               <input
                 type="text"
-                placeholder="Ask AI Career Assistant..."
+                placeholder="Ask AI Career Agent..."
                 value={chatInput}
                 onChange={e => setChatInput(e.target.value)}
               />
