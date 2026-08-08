@@ -42,8 +42,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 CareerPilot API running on port ${PORT}`);
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`⚠️ Port ${PORT} is already occupied and running the active Express backend.`);
+  } else {
+    console.error('Server error:', err);
+  }
 });
 
 export default app;
