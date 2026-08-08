@@ -242,6 +242,19 @@ export default function JobDetailPage() {
               >
                 {applying ? 'Submitting...' : <><Send size={16} /> Apply Now</>}
               </button>
+
+              {job.url && (
+                <a
+                  href={job.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary w-full"
+                  style={{ textDecoration: 'none', display: 'flex', fontStyle: 'normal', alignItems: 'center', justifyContent: 'center', gap: 6, margin: '6px 0' }}
+                >
+                  <ExternalLink size={15} /> Apply on Company Site
+                </a>
+              )}
+
               <button
                 className={`btn ${saved ? 'btn-secondary' : 'btn-ghost'} w-full`}
                 onClick={handleSave}
