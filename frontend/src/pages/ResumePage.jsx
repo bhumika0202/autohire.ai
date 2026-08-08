@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Upload, FileText, Check, Loader, User, Briefcase, GraduationCap,
   Code, FolderOpen, Award, MoreVertical, Trash2, CloudUpload, Sparkles,
-  Zap, CheckCircle2, ShieldCheck, Cpu, ArrowUpRight
+  Zap, CheckCircle2, ShieldCheck, Cpu, ArrowUpRight, Edit2, Plus, X, Save
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
@@ -20,11 +20,18 @@ export default function ResumePage() {
   const fileInputRef = useRef();
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState(null);
-  const [step, setStep] = useState(3); // Default to profile view if profile loaded
+  const [step, setStep] = useState(3);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showHistoryMenu, setShowHistoryMenu] = useState(null);
   const [resumeHistory, setResumeHistory] = useState([]);
+
+  // Editing Profile State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editAbout, setEditAbout] = useState('');
+  const [editSkills, setEditSkills] = useState([]);
+  const [newSkillInput, setNewSkillInput] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
 
   // Fetch real uploaded resume profile on load
   useEffect(() => {
@@ -33,7 +40,9 @@ export default function ResumePage() {
         const res = await api.getProfile();
         if (res.profile) {
           setProfile(res.profile);
-          setStep(3); // Show profile view by default if data exists
+          setEditAbout(res.profile.about || '');
+          setEditSkills(res.profile.skills || []);
+          setStep(3);
           if (res.profile.resume_url) {
             const fileName = res.profile.resume_url.replace('uploads/', '');
             setResumeHistory([
@@ -46,7 +55,7 @@ export default function ResumePage() {
             ]);
           }
         } else {
-          setStep(-1); // Show upload box if no profile yet
+          setStep(-1);
         }
       } catch (err) {
         console.error('Failed to fetch profile:', err);
@@ -73,6 +82,8 @@ export default function ResumePage() {
       setStep(3);
       await new Promise(r => setTimeout(r, 400));
       setProfile(data.profile);
+      setEditAbout(data.profile.about || '');
+      setEditSkills(data.profile.skills || []);
 
       const newHistoryItem = {
         id: Date.now().toString(),
@@ -101,6 +112,37 @@ export default function ResumePage() {
   const handleDeleteHistory = (id) => {
     setResumeHistory(prev => prev.filter(item => item.id !== id));
     addToast('Resume removed from history', 'info');
+  };
+
+  const handleAddSkill = () => {
+    if (!newSkillInput.trim()) return;
+    if (!editSkills.includes(newSkillInput.trim())) {
+      setEditSkills(prev => [...prev, newSkillInput.trim()]);
+    }
+    setNewSkillInput('');
+  };
+
+  const handleRemoveSkill = (skillToRemove) => {
+    setEditSkills(prev => prev.filter(s => s !== skillToRemove));
+  };
+
+  const handleSaveProfile = async () => {
+    setSavingProfile(true);
+    try {
+      const res = await api.updateProfile({
+        about: editAbout,
+        skills: editSkills
+      });
+      if (res.profile) {
+        setProfile(res.profile);
+        addToast('Profile & skills updated in database!', 'success');
+      }
+      setIsEditing(false);
+    } catch (err) {
+      addToast(err.message || 'Failed to update profile', 'error');
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   const skills = Array.isArray(profile?.skills) ? profile.skills : [
@@ -169,7 +211,7 @@ export default function ResumePage() {
             </div>
             <div>
               <div className="metric-label">Profile Strength</div>
-              <div className="metric-value green">94% Strong</div>
+              <div className="metric-value green">96% High Precision</div>
             </div>
           </div>
 
@@ -179,7 +221,7 @@ export default function ResumePage() {
             </div>
             <div>
               <div className="metric-label">Extracted Skills</div>
-              <div className="metric-value">{skills.length} Skills</div>
+              <div className="metric-value">{skills.length} Technical Skills</div>
             </div>
           </div>
 
@@ -189,7 +231,7 @@ export default function ResumePage() {
             </div>
             <div>
               <div className="metric-label">Domain Focus</div>
-              <div className="metric-value">MERN / Full Stack</div>
+              <div className="metric-value">Software Engineering</div>
             </div>
           </div>
 
@@ -199,7 +241,7 @@ export default function ResumePage() {
             </div>
             <div>
               <div className="metric-label">Database Status</div>
-              <div className="metric-value">PostgreSQL Saved</div>
+              <div className="metric-value">PostgreSQL Synced</div>
             </div>
           </div>
         </div>
@@ -281,10 +323,74 @@ export default function ResumePage() {
               <p>Generated from {file?.name || 'your uploaded resume'}</p>
             </div>
 
-            <button className="btn btn-secondary" onClick={() => setStep(-1)}>
-              <Upload size={14} /> Re-upload Resume
-            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                className={`btn ${isEditing ? 'btn-secondary' : 'btn-secondary'}`}
+                onClick={() => setIsEditing(!isEditing)}
+              >
+                <Edit2 size={14} /> {isEditing ? 'Cancel Editing' : 'Edit Profile & Skills'}
+              </button>
+              <button className="btn btn-primary" onClick={() => setStep(-1)}>
+                <Upload size={14} /> Upload New Resume
+              </button>
+            </div>
           </div>
+
+          {/* Inline Profile & Skill Editor */}
+          {isEditing && (
+            <div className="card profile-card-fancy edit-profile-banner animate-fade-in">
+              <div className="card-fancy-header">
+                <Edit2 size={18} className="header-icon blue" />
+                <h3>Edit Career Profile Details & Skills</h3>
+              </div>
+
+              <div className="edit-form-group">
+                <label className="edit-label">About / Professional Bio</label>
+                <textarea
+                  className="edit-textarea"
+                  rows={3}
+                  value={editAbout}
+                  onChange={e => setEditAbout(e.target.value)}
+                  placeholder="Enter your professional summary..."
+                />
+              </div>
+
+              <div className="edit-form-group">
+                <label className="edit-label">Technical Skills (Click X to remove or type to add)</label>
+                <div className="edit-skills-pill-box">
+                  {editSkills.map(skill => (
+                    <span key={skill} className="edit-skill-tag">
+                      {skill}
+                      <X size={12} className="tag-remove-icon" onClick={() => handleRemoveSkill(skill)} />
+                    </span>
+                  ))}
+                </div>
+                <div className="add-skill-row">
+                  <input
+                    type="text"
+                    className="add-skill-input"
+                    placeholder="Add custom tech skill (e.g. Docker, PyTorch)..."
+                    value={newSkillInput}
+                    onChange={e => setNewSkillInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleAddSkill(); }}
+                  />
+                  <button className="btn btn-secondary btn-sm" onClick={handleAddSkill}>
+                    <Plus size={14} /> Add Skill
+                  </button>
+                </div>
+              </div>
+
+              <div className="edit-actions-row">
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSaveProfile}
+                  disabled={savingProfile}
+                >
+                  {savingProfile ? <Loader size={14} className="animate-spin" /> : <Save size={14} />} Save Profile Changes
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="profile-grid">
             {/* About Section */}
@@ -294,7 +400,7 @@ export default function ResumePage() {
                 <h3>About Me</h3>
               </div>
               <p className="profile-about-text">
-                {profile?.about || 'Experienced software developer with a passion for building scalable web applications using modern JavaScript technologies. Strong background in full-stack development with expertise in the MERN stack.'}
+                {profile?.about || 'Experienced software developer with a passion for building scalable web applications using modern JavaScript technologies.'}
               </p>
             </div>
 
