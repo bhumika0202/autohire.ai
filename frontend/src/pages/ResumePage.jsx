@@ -228,37 +228,44 @@ export default function ResumePage() {
           </div>
         </div>
       ) : step < 3 ? (
-        /* Processing Loading Card */
-        <div className="processing-card card">
+        /* Gorgeous AI Processing Card */
+        <div className="processing-card card animate-fade-in">
           <div className="processing-header">
-            <div className="processing-ai-icon">
-              <Cpu size={24} className="animate-pulse" />
+            <div className="processing-ai-icon-glow">
+              <Cpu size={26} className="animate-spin" />
             </div>
             <div>
-              <h3 className="processing-title">AI is analyzing your resume...</h3>
-              <p className="processing-desc">Extracting skills, work timeline, and saving career profile</p>
+              <div className="processing-badge">
+                <Sparkles size={12} /> AI DEEP SCANNER
+              </div>
+              <h3 className="processing-title">Scanning & Extracting Resume Data...</h3>
+              <p className="processing-desc">Parsing PDF text lines, extracting tech skills, and saving to database.</p>
             </div>
           </div>
 
-          <div className="processing-steps">
+          <div className="processing-steps-horizontal">
             {STEPS.map((s, i) => {
               const done = step > i;
               const active = step === i;
               return (
-                <div key={s.id} className={`processing-step ${done ? 'done' : active ? 'active' : 'pending'}`}>
-                  <div className="step-indicator">
-                    {done ? <Check size={14} /> : active ? <Loader size={14} className="animate-spin" /> : <div className="step-empty" />}
+                <div key={s.id} className={`processing-step-item ${done ? 'done' : active ? 'active' : 'pending'}`}>
+                  <div className="step-circle">
+                    {done ? <Check size={14} /> : active ? <Loader size={14} className="animate-spin" /> : (i + 1)}
                   </div>
-                  <span className="step-label">{s.label}</span>
+                  <span className="step-label-text">{s.label}</span>
                 </div>
               );
             })}
           </div>
 
           {file && (
-            <div className="file-info">
-              <FileText size={16} />
-              <span>{file.name}</span>
+            <div className="processing-file-pill">
+              <FileText size={16} className="file-pill-icon" />
+              <span className="file-pill-name">{file.name}</span>
+              <span className="file-pill-size">{(file.size / (1024 * 1024)).toFixed(1)} MB</span>
+              <span className="file-pill-status">
+                <CheckCircle2 size={12} /> Scanned
+              </span>
             </div>
           )}
         </div>
