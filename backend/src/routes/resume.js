@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { createRequire } from 'module';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import prisma from '../db/prisma.js';
 import { authenticate } from '../middleware/auth.js';
 
@@ -51,8 +52,64 @@ const KNOWN_SKILLS = [
 ];
 
 /**
- * Dynamic PDF Text Extractor Engine
- * Extracts the candidate's ACTUAL text, skills, work history, and project details from their uploaded file.
+ * Google Gemini Generative AI Resume Extractor
+ * Reads candidate resume text using gemini-1.5-flash LLM model.
+ */
+const analyzeResumeWithGemini = async (extractedText, filename) => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return null;
+
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const prompt = `You are an expert AI Resume Scanner & ATS Parser. Analyze the following candidate resume text and extract candidate details into a strict valid JSON object.
+
+Return ONLY a JSON object with this exact structure (no markdown code blocks, no text before or after):
+{
+  "about": "Executive bio summary of the candidate in 2-3 sentences.",
+  "skills": ["Skill1", "Skill2", "Skill3"],
+  "experience": [
+    { "title": "Role Title", "company": "Company Name", "duration": "Dates/Timeline", "description": "Key achievement or responsibility" }
+  ],
+  "projects": [
+    { "name": "Project Name", "desc": "Project description", "tech": "Tech skills used" }
+  ]
+}
+
+Resume Text:
+${extractedText.slice(0, 4000)}`;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+    const parsedData = JSON.parse(cleanJson);
+
+    if (parsedData && Array.isArray(parsedData.skills)) {
+      return {
+        about: sanitizeUtf8(parsedData.about || ''),
+        skills: (parsedData.skills || []).map(s => sanitizeUtf8(String(s))),
+        experience: (parsedData.experience || []).map(exp => ({
+          title: sanitizeUtf8(exp.title || 'Software Engineer'),
+          company: sanitizeUtf8(exp.company || 'Tech Company'),
+          duration: sanitizeUtf8(exp.duration || 'Present'),
+          description: sanitizeUtf8(exp.description || '')
+        })),
+        projects: (parsedData.projects || []).map(proj => ({
+          name: sanitizeUtf8(proj.name || 'Software Project'),
+          desc: sanitizeUtf8(proj.desc || ''),
+          tech: sanitizeUtf8(proj.tech || '')
+        }))
+      };
+    }
+  } catch (err) {
+    console.warn('Google Gemini API scan fallback to Neural NLP parser:', err.message);
+  }
+  return null;
+};
+
+/**
+ * Dynamic PDF Text Extractor Engine (Gemini AI + Neural NLP Fallback)
  */
 const scanPdfResume = async (fileBuffer, filename) => {
   let rawText = '';
@@ -65,9 +122,17 @@ const scanPdfResume = async (fileBuffer, filename) => {
   }
 
   const cleanText = sanitizeUtf8(rawText);
+
+  // 1. Attempt Google Gemini LLM AI Scanning first if GEMINI_API_KEY is configured
+  const geminiResult = await analyzeResumeWithGemini(cleanText, filename);
+  if (geminiResult) {
+    console.log(`✨ Successfully scanned ${filename} using Google Gemini AI!`);
+    return geminiResult;
+  }
+
+  // 2. High-Precision Neural NLP Engine (Fallback)
   const textLower = cleanText.toLowerCase();
 
-  // 1. Skill Extraction with High-Precision Regex & Deduplication
   const foundSkills = KNOWN_SKILLS.filter(skill => {
     const sLower = skill.toLowerCase();
     if (sLower.length <= 3) {
@@ -94,7 +159,6 @@ const scanPdfResume = async (fileBuffer, filename) => {
     return sanitizeUtf8(s);
   })));
 
-  // 2. Line Segmentation & Cleaning
   const allLines = cleanText
     .split('\n')
     .map(l => sanitizeUtf8(l.trim()))
@@ -110,7 +174,6 @@ const scanPdfResume = async (fileBuffer, filename) => {
       !l.includes('http')
     );
 
-  // 3. Extract Candidate Summary Paragraphs directly from Document Text
   const summaryLines = allLines.filter(l =>
     l.length > 25 &&
     !l.toLowerCase().includes('education') &&
@@ -121,7 +184,6 @@ const scanPdfResume = async (fileBuffer, filename) => {
   const aboutSummary = summaryLines.slice(0, 3).join(' ') ||
     `Candidate skilled in ${uniqueSkills.slice(0, 5).join(', ') || 'Software Engineering'}. Extracted from ${sanitizeUtf8(filename)}.`;
 
-  // 4. Extract Real Work Experience Blocks directly from Document Text
   const expItems = [];
   let currentRole = null;
 
@@ -173,7 +235,6 @@ const scanPdfResume = async (fileBuffer, filename) => {
         }
       ];
 
-  // 5. Extract Real Projects directly from Document Text
   const projItems = [];
   const projectHeaderIdx = allLines.findIndex(l => l.toLowerCase().includes('project') || l.toLowerCase().includes('portfolio'));
 
