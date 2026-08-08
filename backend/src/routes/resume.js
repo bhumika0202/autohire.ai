@@ -5,7 +5,7 @@ import prisma from '../db/prisma.js';
 import { authenticate } from '../middleware/auth.js';
 
 const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
+const pdfLib = require('pdf-parse');
 
 const router = express.Router();
 
@@ -14,11 +14,7 @@ const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf' || file.mimetype.includes('word') || file.mimetype.includes('text')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PDF and Word text files are supported'));
-    }
+    cb(null, true);
   }
 });
 
@@ -31,18 +27,30 @@ const KNOWN_SKILLS = [
   'Spring Boot', 'Django', 'Flask', 'Flutter', 'React Native', 'Linux', 'Agile', 'Jira'
 ];
 
-// Scan PDF buffer for real text, skills, about summary, experience, and projects
+// Scan PDF buffer reliably without type errors
 const scanPdfResume = async (fileBuffer, filename) => {
   let extractedText = '';
   try {
-    const data = await pdfParse(fileBuffer);
-    extractedText = data.text || '';
+    if (typeof pdfLib === 'function') {
+      const data = await pdfLib(fileBuffer);
+      extractedText = data?.text || '';
+    } else if (pdfLib && typeof pdfLib.PDFParse === 'function') {
+      const parser = new pdfLib.PDFParse(fileBuffer);
+      if (typeof parser.extractText === 'function') {
+        const res = await parser.extractText();
+        extractedText = typeof res === 'string' ? res : (res?.text || '');
+      } else {
+        extractedText = fileBuffer.toString('utf-8');
+      }
+    } else {
+      extractedText = fileBuffer.toString('utf-8');
+    }
   } catch (err) {
-    console.warn('PDF Parsing fallback to raw text buffer:', err.message);
-    extractedText = fileBuffer.toString('utf-8');
+    console.warn('PDF Parsing fallback to raw text buffer scan:', err.message);
+    extractedText = fileBuffer ? fileBuffer.toString('utf-8') : '';
   }
 
-  const textLower = extractedText.toLowerCase();
+  const textLower = (extractedText || '').toLowerCase();
 
   // 1. Detect Real Skills from Document
   const foundSkills = KNOWN_SKILLS.filter(skill => {
@@ -50,7 +58,6 @@ const scanPdfResume = async (fileBuffer, filename) => {
     return textLower.includes(sLower);
   });
 
-  // Remove duplicates like React / React.js
   const uniqueSkills = Array.from(new Set(foundSkills.map(s => {
     if (s.toLowerCase() === 'react.js') return 'React';
     if (s.toLowerCase() === 'express.js') return 'Express.js';
@@ -59,17 +66,17 @@ const scanPdfResume = async (fileBuffer, filename) => {
     return s;
   })));
 
-  // 2. Extract Real Lines for About / Summary
-  const lines = extractedText
+  // 2. Extract Summary Lines
+  const cleanLines = (extractedText || '')
     .split('\n')
     .map(l => l.trim())
     .filter(l => l.length > 15 && !l.includes('Page ') && !l.includes('http'));
 
-  const aboutSummary = lines.slice(0, 3).join(' ') ||
+  const aboutSummary = cleanLines.slice(0, 3).join(' ') ||
     `Scanned resume "${filename}". Technical candidate skilled in ${uniqueSkills.slice(0, 4).join(', ') || 'Software Development'}.`;
 
-  // 3. Extract Experience & Projects from PDF lines
-  const expLines = lines.filter(l =>
+  // 3. Extract Experience & Projects
+  const expLines = cleanLines.filter(l =>
     l.toLowerCase().includes('developer') ||
     l.toLowerCase().includes('engineer') ||
     l.toLowerCase().includes('intern') ||
@@ -77,21 +84,21 @@ const scanPdfResume = async (fileBuffer, filename) => {
     l.toLowerCase().includes('lead')
   );
 
-  const parsedExperience = expLines.slice(0, 3).map((line, idx) => ({
+  const parsedExperience = expLines.slice(0, 3).map(line => ({
     title: line.length > 50 ? line.slice(0, 48) + '...' : line,
     company: 'Scanned Organization',
     duration: 'Scanned Timeline',
     description: `Parsed from uploaded resume: ${line}`
   }));
 
-  const projLines = lines.filter(l =>
+  const projLines = cleanLines.filter(l =>
     l.toLowerCase().includes('project') ||
     l.toLowerCase().includes('system') ||
     l.toLowerCase().includes('app') ||
     l.toLowerCase().includes('platform')
   );
 
-  const parsedProjects = projLines.slice(0, 3).map((line, idx) => ({
+  const parsedProjects = projLines.slice(0, 3).map(line => ({
     name: line.length > 45 ? line.slice(0, 42) + '...' : line,
     desc: `Scanned project details from ${filename}`,
     tech: uniqueSkills.slice(0, 4).join(', ')
@@ -101,8 +108,7 @@ const scanPdfResume = async (fileBuffer, filename) => {
     about: aboutSummary,
     skills: uniqueSkills.length > 0 ? uniqueSkills : ['JavaScript', 'Software Development'],
     experience: parsedExperience,
-    projects: parsedProjects,
-    rawText: extractedText
+    projects: parsedProjects
   };
 };
 
@@ -113,7 +119,6 @@ router.post('/upload', authenticate, upload.single('resume'), async (req, res) =
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Perform real AI PDF text scanning
     const scanned = await scanPdfResume(req.file.buffer, req.file.originalname);
 
     const profile = await prisma.careerProfile.upsert({
