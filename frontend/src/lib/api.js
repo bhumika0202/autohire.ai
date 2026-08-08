@@ -31,9 +31,10 @@ export const api = {
   login: (data) => request('/auth/login', { method: 'POST', body: data }),
   getMe: () => request('/auth/me'),
 
-  // Profile
+  // Profile & Avatar
   getProfile: () => request('/profile'),
   updateProfile: (data) => request('/profile', { method: 'PUT', body: data }),
+  uploadAvatar: (formData) => request('/profile/avatar', { method: 'POST', body: formData }),
   getStats: () => request('/profile/stats'),
 
   // Resume

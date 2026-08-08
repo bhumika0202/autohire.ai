@@ -16,6 +16,14 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
+  const updateUser = (data) => {
+    setUser(prev => {
+      const updated = { ...prev, ...data };
+      localStorage.setItem('careerpilot_user', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const login = async (email, password) => {
     const data = await api.login({ email, password });
     localStorage.setItem('careerpilot_token', data.token);
@@ -39,7 +47,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, updateUser, login, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

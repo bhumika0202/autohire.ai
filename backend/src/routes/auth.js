@@ -13,7 +13,6 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Name, email and password are required' });
     }
 
-    // Check if user exists
     const existing = await prisma.user.findUnique({
       where: { email }
     });
@@ -37,6 +36,7 @@ router.post('/register', async (req, res) => {
         id: true,
         name: true,
         email: true,
+        avatarUrl: true,
         createdAt: true
       }
     });
@@ -47,7 +47,7 @@ router.post('/register', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email } });
+    res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email, avatar_url: user.avatarUrl } });
   } catch (err) {
     console.error('Register error:', err);
     res.status(500).json({ error: 'Registration failed' });
@@ -81,7 +81,7 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email, avatar_url: user.avatarUrl } });
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Login failed' });
@@ -108,7 +108,7 @@ router.get('/me', async (req, res) => {
     });
 
     if (!user) return res.status(404).json({ error: 'User not found' });
-    res.json({ user });
+    res.json({ user: { id: user.id, name: user.name, email: user.email, avatar_url: user.avatarUrl } });
   } catch (err) {
     res.status(401).json({ error: 'Invalid token' });
   }

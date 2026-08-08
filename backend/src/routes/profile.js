@@ -1,14 +1,73 @@
 import express from 'express';
+import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
 import prisma from '../db/prisma.js';
 import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dm2qqbayd',
+  api_key: process.env.CLOUDINARY_API_KEY || '263348621368692',
+  api_secret: process.env.CLOUDINARY_API_SECRET || '7b2wgzgp3iM6MkKG2iojZuAPGRk'
+});
+
+// Configure Multer Memory Storage
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
+
+// Upload Profile Avatar to Cloudinary
+router.post('/avatar', authenticate, upload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
+
+    // Stream upload to Cloudinary
+    const uploadToCloudinary = () => {
+      return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: 'autohire_avatars',
+            transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }]
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        stream.end(req.file.buffer);
+      });
+    };
+
+    const cloudinaryResult = await uploadToCloudinary();
+    const avatarUrl = cloudinaryResult.secure_url;
+
+    // Update User record in Database
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { avatarUrl }
+    });
+
+    res.json({
+      message: 'Avatar uploaded successfully',
+      avatar_url: updatedUser.avatarUrl
+    });
+  } catch (err) {
+    console.error('Cloudinary avatar upload error:', err);
+    res.status(500).json({ error: 'Failed to upload image to Cloudinary' });
+  }
+});
+
 // Get career profile
 router.get('/', authenticate, async (req, res) => {
   try {
     const profile = await prisma.careerProfile.findUnique({
-      where: { userId: req.user.id }
+      where: { userId: req.user.id },
+      include: { user: { select: { avatarUrl: true, name: true, email: true } } }
     });
 
     if (!profile) {
@@ -19,6 +78,7 @@ router.get('/', authenticate, async (req, res) => {
       profile: {
         id: profile.id,
         user_id: profile.userId,
+        avatar_url: profile.user?.avatarUrl,
         about: profile.about,
         target_roles: profile.targetRoles,
         skills: profile.skills,
@@ -59,13 +119,15 @@ router.put('/', authenticate, async (req, res) => {
       create: {
         userId: req.user.id,
         ...updateData
-      }
+      },
+      include: { user: { select: { avatarUrl: true } } }
     });
 
     res.json({
       profile: {
         id: profile.id,
         user_id: profile.userId,
+        avatar_url: profile.user?.avatarUrl,
         about: profile.about,
         target_roles: profile.targetRoles,
         skills: profile.skills,

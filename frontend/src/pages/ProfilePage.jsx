@@ -98,7 +98,13 @@ export default function ProfilePage() {
       <div className="profile-banner-card">
         <div className="banner-content">
           <div className="banner-avatar-wrap">
-            <div className="banner-avatar">{initials}</div>
+            <div className="banner-avatar">
+              {user?.avatar_url ? (
+                <img src={user.avatar_url} alt="Profile Avatar" className="top-avatar-img" />
+              ) : (
+                initials
+              )}
+            </div>
             <div className="banner-status-dot" title="Verified Profile" />
           </div>
 

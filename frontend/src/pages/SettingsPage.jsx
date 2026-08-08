@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { User, Lock, Bell, Moon, Shield, Save, Camera, Check } from 'lucide-react';
+import { api } from '../lib/api';
+import { User, Lock, Bell, Moon, Shield, Save, Camera, Check, Loader } from 'lucide-react';
 import './SettingsPage.css';
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const addToast = useToast();
+  const fileInputRef = useRef(null);
+
   const [activeTab, setActiveTab] = useState('profile');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
   const [form, setForm] = useState({
     name: user?.name || 'Hitesh Sharma',
     email: user?.email || 'hitesh@gmail.com',
@@ -40,8 +45,36 @@ export default function SettingsPage() {
 
   const initials = form.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'HS';
 
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      addToast('Please select a valid image file', 'error');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      const res = await api.uploadAvatar(formData);
+
+      if (res.avatar_url) {
+        updateUser({ avatar_url: res.avatar_url });
+        addToast('Profile picture uploaded to Cloudinary!', 'success');
+      }
+    } catch (err) {
+      console.error(err);
+      addToast(err.message || 'Failed to upload photo to Cloudinary', 'error');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleSaveProfile = (e) => {
     e.preventDefault();
+    updateUser({ name: form.name, email: form.email });
     addToast('Settings saved successfully!', 'success');
   };
 
@@ -57,13 +90,22 @@ export default function SettingsPage() {
 
   return (
     <div className="settings-page-wrapper animate-fade-in">
+      {/* Hidden File Input for Cloudinary Upload */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleAvatarChange}
+      />
+
       {/* Header */}
       <div className="settings-header-box">
         <h1 className="settings-main-title">Settings</h1>
         <p className="settings-sub-title">Manage your account preferences and profile settings</p>
       </div>
 
-      {/* Horizontal Nav Tabs (Matching Reference UI) */}
+      {/* Horizontal Nav Tabs */}
       <div className="settings-nav-tabs">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
@@ -87,13 +129,30 @@ export default function SettingsPage() {
               <h3 className="section-title-sm">Profile Picture</h3>
               <div className="picture-row">
                 <div className="avatar-preview-box">
-                  <span>{initials}</span>
+                  {user?.avatar_url ? (
+                    <img src={user.avatar_url} alt="Profile" className="avatar-img-fit" />
+                  ) : (
+                    <span>{initials}</span>
+                  )}
                 </div>
                 <div className="picture-actions">
-                  <button className="change-photo-btn" onClick={() => addToast('Photo uploaded!', 'success')}>
-                    <Camera size={14} /> Change Photo
+                  <button
+                    type="button"
+                    className="change-photo-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                  >
+                    {uploadingAvatar ? (
+                      <>
+                        <Loader size={14} className="animate-spin" /> Uploading to Cloudinary...
+                      </>
+                    ) : (
+                      <>
+                        <Camera size={14} /> Change Photo
+                      </>
+                    )}
                   </button>
-                  <p className="photo-help-text">JPG, PNG up to 2MB</p>
+                  <p className="photo-help-text">Uploaded securely to Cloudinary (Max 5MB)</p>
                 </div>
               </div>
             </div>

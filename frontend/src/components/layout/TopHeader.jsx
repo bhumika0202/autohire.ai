@@ -261,13 +261,23 @@ export default function TopHeader({ onMenuClick }) {
               onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifMenu(false); }}
               title="User Account"
             >
-              {initials}
+              {user?.avatar_url ? (
+                <img src={user.avatar_url} alt="Avatar" className="top-avatar-img" />
+              ) : (
+                initials
+              )}
             </div>
 
             {showUserMenu && (
               <div className="user-dropdown-menu animate-fade-in">
                 <div className="user-info-header">
-                  <div className="user-avatar-circle">{initials}</div>
+                  <div className="user-avatar-circle">
+                    {user?.avatar_url ? (
+                      <img src={user.avatar_url} alt="Avatar" className="top-avatar-img" />
+                    ) : (
+                      initials
+                    )}
+                  </div>
                   <div className="user-details-box">
                     <div className="user-display-name">{user?.name || 'Hitesh Sharma'}</div>
                     <div className="user-email-text">{user?.email || 'hitesh@gmail.com'}</div>
