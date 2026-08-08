@@ -1,34 +1,28 @@
 import { useState, useEffect } from 'react';
-import {
-  User, Code, Briefcase, GraduationCap, FolderOpen, Edit2, Save, X, Mail, Phone,
-  MapPin, Award, CheckCircle2, Sparkles, ExternalLink, Globe, Target, ShieldCheck,
-  Zap, Plus, Trash2, Download, RefreshCw
-} from 'lucide-react';
+import { User, Code, Briefcase, GraduationCap, FolderOpen, Edit2, Save, X, Mail, Phone, MapPin, Award, CheckCircle2, Sparkles, ExternalLink, Globe, Target, ShieldCheck } from 'lucide-react';
 import { api } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import './ProfilePage.css';
 
 const DEFAULT_PROFILE = {
-  phone: '+91 98765 43210',
-  location: 'India',
-  about: 'Driven Full Stack Software Engineer with strong expertise in building scalable web applications, REST APIs, and microservices using React, Node.js, Express, and PostgreSQL/MongoDB.',
-  target_roles: ['Full Stack Developer', 'MERN Stack Developer', 'Frontend Engineer', 'Backend Engineer'],
-  skills: ['React.js', 'Node.js', 'Express.js', 'MongoDB', 'PostgreSQL', 'JavaScript (ES6+)', 'TypeScript', 'Tailwind CSS', 'Git & GitHub', 'REST APIs', 'Docker', 'AWS'],
+  about: 'Driven and detail-oriented Full Stack Software Developer with expertise in building robust, high-performance web applications using the MERN stack (MongoDB, Express, React, Node.js). Experienced in designing RESTful APIs, implementing modern UI/UX components, and optimizing database workflows.',
+  target_roles: ['MERN Stack Developer', 'Full Stack Developer', 'Frontend Developer', 'Backend Engineer'],
+  skills: ['React.js', 'Node.js', 'Express.js', 'MongoDB', 'JavaScript (ES6+)', 'Tailwind CSS', 'Git & GitHub', 'RESTful APIs', 'Prisma ORM', 'PostgreSQL'],
   experience: [
     {
-      company: 'Tech Innovations Pvt. Ltd.',
+      company: 'TechCorp Solutions',
       role: 'Full Stack Developer',
       duration: 'Jan 2023 - Present',
       location: 'Ahmedabad, India',
-      description: 'Architected and deployed scalable MERN web applications, integrated payment APIs, and optimized SQL/NoSQL database queries.'
+      description: 'Architected and deployed enterprise MERN stack web applications, integrated third-party payment gateways, and improved system response time by 35% through API query optimization.'
     },
     {
       company: 'InnoTech Labs',
       role: 'Frontend Engineer Intern',
       duration: 'Jun 2022 - Dec 2022',
       location: 'Remote',
-      description: 'Developed responsive, accessible UI components using React.js and Redux Toolkit, collaborating with product designers.'
+      description: 'Developed responsive, accessible UI components using React.js and Redux Toolkit, collaborating closely with UI/UX designers to implement pixel-perfect designs.'
     }
   ],
   education: [
@@ -41,15 +35,15 @@ const DEFAULT_PROFILE = {
   ],
   projects: [
     {
-      name: 'Autohire.ai — AI Career Agent',
-      description: 'Automated AI career management agent with real-time job matching, instant cover letter generation, and Gmail dispatches.',
-      skills: ['React', 'Node.js', 'Express', 'PostgreSQL', 'Gmail SMTP'],
+      name: 'Purchase & Procurement Management System (PPMS)',
+      description: 'A comprehensive full-stack procurement platform managing vendor onboardings, purchase requisitions, RFQs, quotations, and real-time inventory tracking.',
+      skills: ['React', 'Node.js', 'Express', 'MongoDB'],
       link: 'https://github.com/bhumika0202/autohire.ai'
     },
     {
-      name: 'Procurement Management System',
-      description: 'A comprehensive full-stack procurement platform managing vendor onboardings, purchase requisitions, and real-time inventory tracking.',
-      skills: ['React', 'Node.js', 'MongoDB', 'Express'],
+      name: 'Autohire.ai - AI Resume & Career Agent',
+      description: 'An intelligent AI-powered job application agent that extracts career profiles from resumes, scores job matches, and generates tailored cover letters.',
+      skills: ['React', 'Vite', 'Node.js', 'Prisma', 'PostgreSQL'],
       link: 'https://github.com/bhumika0202/autohire.ai'
     }
   ],
@@ -67,8 +61,6 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState(DEFAULT_PROFILE);
-  const [newSkill, setNewSkill] = useState('');
-  const [newRole, setNewRole] = useState('');
 
   const initials = user?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'HS';
 
@@ -76,231 +68,142 @@ export default function ProfilePage() {
     setLoading(true);
     api.getProfile().then(data => {
       if (data.profile) {
-        const loadedProfile = {
+        setProfile(prev => ({
           ...DEFAULT_PROFILE,
           ...data.profile,
-          phone: data.profile.phone || DEFAULT_PROFILE.phone,
-          location: data.profile.location || DEFAULT_PROFILE.location,
           skills: data.profile.skills?.length ? data.profile.skills : DEFAULT_PROFILE.skills,
           projects: Array.isArray(data.profile.projects) && data.profile.projects.length ? data.profile.projects : DEFAULT_PROFILE.projects,
-          experience: Array.isArray(data.profile.experience) && data.profile.experience.length ? data.profile.experience : DEFAULT_PROFILE.experience,
           certifications: DEFAULT_PROFILE.certifications
-        };
-        setProfile(loadedProfile);
-        setForm(loadedProfile);
+        }));
+        setForm(data.profile);
       }
-    }).catch(() => {}).finally(() => setLoading(false));
+    }).catch(() => { }).finally(() => setLoading(false));
   }, []);
 
   const handleSave = async () => {
     try {
       const data = await api.updateProfile(form);
-      setProfile(prev => ({ ...prev, ...data.profile, phone: form.phone, location: form.location }));
+      setProfile(prev => ({ ...prev, ...data.profile }));
       setEditMode(false);
-      addToast('Profile, phone number & career data updated in PostgreSQL!', 'success');
+      addToast('Career profile updated successfully!', 'success');
     } catch (err) {
-      setProfile(prev => ({ ...prev, ...form }));
       setEditMode(false);
-      addToast('Profile updated successfully!', 'success');
+      addToast('Profile updated!', 'success');
     }
   };
-
-  const handleAddSkill = () => {
-    if (!newSkill.trim()) return;
-    if (!form.skills.includes(newSkill.trim())) {
-      setForm(prev => ({ ...prev, skills: [...prev.skills, newSkill.trim()] }));
-    }
-    setNewSkill('');
-  };
-
-  const handleRemoveSkill = (skillToRemove) => {
-    setForm(prev => ({ ...prev, skills: prev.skills.filter(s => s !== skillToRemove) }));
-  };
-
-  const handleAddRole = () => {
-    if (!newRole.trim()) return;
-    if (!form.target_roles.includes(newRole.trim())) {
-      setForm(prev => ({ ...prev, target_roles: [...prev.target_roles, newRole.trim()] }));
-    }
-    setNewRole('');
-  };
-
-  const handleRemoveRole = (roleToRemove) => {
-    setForm(prev => ({ ...prev, target_roles: prev.target_roles.filter(r => r !== roleToRemove) }));
-  };
-
-  // Dynamic calculations to make numbers 100% accurate
-  const totalSkillsCount = (profile.skills || []).length;
-  const totalExpCount = (profile.experience || []).length;
-  const totalProjCount = (profile.projects || []).length;
-  const matchScorePercentage = Math.min(98, Math.max(82, 70 + totalSkillsCount * 2));
 
   return (
     <div className="career-profile-page animate-fade-in">
-      {/* Premium Hero Banner */}
-      <div className="profile-hero-banner card">
-        <div className="hero-top-bar">
-          <div className="hero-badge-pill">
-            <Sparkles size={13} /> AI CAREER INTELLIGENCE PROFILE
-          </div>
-          <div className="hero-sync-pill">
-            <ShieldCheck size={13} /> VERIFIED CANDIDATE
-          </div>
-        </div>
-
-        <div className="hero-main-content">
-          <div className="hero-avatar-box">
-            <div className="hero-avatar-circle">
+      {/* Top Banner Hero Card */}
+      <div className="profile-banner-card">
+        <div className="banner-content">
+          <div className="banner-avatar-wrap">
+            <div className="banner-avatar">
               {user?.avatar_url ? (
-                <img src={user.avatar_url} alt="Candidate Avatar" className="avatar-img-fit" />
+                <img src={user.avatar_url} alt="Profile Avatar" className="top-avatar-img" />
               ) : (
                 initials
               )}
             </div>
-            <div className="avatar-live-pulse" title="Active Candidate Status" />
+            <div className="banner-status-dot" title="Verified Profile" />
           </div>
 
-          <div className="hero-info-column">
-            <h1 className="hero-candidate-name">{user?.name || 'Hitesh Sharma'}</h1>
-            <p className="hero-candidate-role">Full Stack Software Engineer • MERN / PostgreSQL Specialist</p>
+          <div className="banner-details">
+            <div className="banner-title-row">
+              <h1 className="banner-name">{user?.name || 'Hitesh Sharma'}</h1>
+              <span className="banner-verified-badge"><ShieldCheck size={14} /> AI Verified</span>
+            </div>
+            <p className="banner-role">Full Stack MERN Developer</p>
 
-            <div className="hero-contact-chips">
-              <span className="contact-chip"><Mail size={13} /> {user?.email || 'hiteshvaishnav602@gmail.com'}</span>
-              <span className="contact-chip"><Phone size={13} /> {profile.phone}</span>
-              <span className="contact-chip"><MapPin size={13} /> {profile.location}</span>
+            <div className="banner-chips">
+              <div className="banner-chip"><Mail size={13} /> {user?.email || 'hitesh@gmail.com'}</div>
+              <div className="banner-chip"><Phone size={13} /> +91 98765 43210</div>
+              <div className="banner-chip"><MapPin size={13} /> Ahmedabad, Gujarat</div>
             </div>
           </div>
 
-          <div className="hero-actions-column">
+          <div className="banner-action">
             {editMode ? (
-              <div className="edit-btn-group">
-                <button className="btn btn-secondary" onClick={() => setEditMode(false)}>
+              <div className="flex gap-2">
+                <button className="btn btn-secondary btn-sm" onClick={() => setEditMode(false)}>
                   <X size={14} /> Cancel
                 </button>
-                <button className="btn btn-primary" onClick={handleSave}>
-                  <Save size={14} /> Save Profile
+                <button className="btn btn-primary btn-sm" onClick={handleSave}>
+                  <Save size={14} /> Save Changes
                 </button>
               </div>
             ) : (
-              <button className="hero-edit-profile-btn" onClick={() => setEditMode(true)}>
-                <Edit2 size={15} /> Edit Career Profile
+              <button className="banner-edit-btn" onClick={() => setEditMode(true)}>
+                <Edit2 size={14} /> Edit Profile
               </button>
             )}
           </div>
         </div>
 
-        {/* Dynamic Matched Performance Stats Bar */}
-        <div className="hero-stats-row">
-          <div className="stat-card">
-            <span className="stat-num green">{matchScorePercentage}%</span>
-            <span className="stat-lbl">AI Match Score</span>
+        {/* Banner Quick Stats Bar */}
+        <div className="banner-stats-bar">
+          <div className="stat-item">
+            <span className="stat-value green">92%</span>
+            <span className="stat-label">AI Match Score</span>
           </div>
-          <div className="stat-sep" />
-          <div className="stat-card">
-            <span className="stat-num blue">{totalSkillsCount}</span>
-            <span className="stat-lbl">Technical Skills</span>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value blue">10+</span>
+            <span className="stat-label">Core Technical Skills</span>
           </div>
-          <div className="stat-sep" />
-          <div className="stat-card">
-            <span className="stat-num purple">{totalExpCount} Records</span>
-            <span className="stat-lbl">Work History</span>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value purple">2+ Yrs</span>
+            <span className="stat-label">Full Stack Experience</span>
           </div>
-          <div className="stat-sep" />
-          <div className="stat-card">
-            <span className="stat-num orange">{totalProjCount} Active</span>
-            <span className="stat-lbl">Portfolio Projects</span>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value orange">3 Verified</span>
+            <span className="stat-label">Certifications</span>
           </div>
         </div>
       </div>
 
-      {/* Editable Contact Info Row when Edit Mode is active */}
-      {editMode && (
-        <div className="card profile-block-card animate-fade-in" style={{ border: '2px dashed #3B82F6', background: '#F8FAFC' }}>
-          <div className="block-card-header">
-            <Edit2 size={18} style={{ color: '#2563EB' }} />
-            <h3>Edit Contact Details (Phone & Location)</h3>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-            <div>
-              <label style={{ fontSize: '13px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '6px' }}>
-                Phone Number
-              </label>
-              <input
-                type="text"
-                className="add-tag-input"
-                style={{ width: '100%', padding: '10px 14px', fontSize: '14px' }}
-                value={form.phone || ''}
-                onChange={e => setForm({ ...form, phone: e.target.value })}
-                placeholder="Enter contact phone number (+91...)..."
-              />
-            </div>
-
-            <div>
-              <label style={{ fontSize: '13px', fontWeight: '700', color: '#334155', display: 'block', marginBottom: '6px' }}>
-                City / Location
-              </label>
-              <input
-                type="text"
-                className="add-tag-input"
-                style={{ width: '100%', padding: '10px 14px', fontSize: '14px' }}
-                value={form.location || ''}
-                onChange={e => setForm({ ...form, location: e.target.value })}
-                placeholder="Enter city/location..."
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Main Two-Column View */}
-      <div className="profile-layout-grid">
-        {/* Left Main Column */}
-        <div className="layout-column-left">
-          {/* About Summary */}
-          <div className="card profile-block-card">
-            <div className="block-card-header">
-              <div className="header-icon-box blue">
-                <User size={18} />
-              </div>
-              <h3>About Me & Executive Summary</h3>
+      <div className="career-profile-grid">
+        {/* Left Column: About, Experience, Education */}
+        <div className="profile-left-column">
+          {/* About */}
+          <div className="card profile-section-card">
+            <div className="section-card-title">
+              <User size={18} className="title-icon blue" />
+              <span>About Me</span>
             </div>
-
             {editMode ? (
               <textarea
-                className="edit-full-textarea"
-                rows={4}
+                className="form-textarea"
                 value={form.about || ''}
                 onChange={e => setForm({ ...form, about: e.target.value })}
-                placeholder="Write your professional summary..."
+                rows={4}
               />
             ) : (
-              <p className="block-about-text">{profile.about}</p>
+              <p className="about-text-content">{profile.about}</p>
             )}
           </div>
 
           {/* Work Experience */}
-          <div className="card profile-block-card">
-            <div className="block-card-header">
-              <div className="header-icon-box orange">
-                <Briefcase size={18} />
-              </div>
-              <h3>Work Experience Timeline ({totalExpCount})</h3>
+          <div className="card profile-section-card">
+            <div className="section-card-title">
+              <Briefcase size={18} className="title-icon indigo" />
+              <span>Work Experience</span>
             </div>
 
-            <div className="fancy-timeline-list">
+            <div className="experience-timeline">
               {(profile.experience || []).map((exp, i) => (
-                <div key={i} className="fancy-timeline-item">
-                  <div className="timeline-node" />
-                  <div className="timeline-card-box">
-                    <div className="timeline-card-header">
-                      <div>
-                        <h4 className="role-title-text">{typeof exp === 'string' ? exp : (exp?.role || exp?.title || 'Software Engineer')}</h4>
-                        <div className="company-subtitle">{exp?.company || 'Technology Company'} • {exp?.location || profile.location || 'India'}</div>
-                      </div>
-                      <span className="duration-pill-badge">{exp?.duration || 'Present'}</span>
+                <div key={i} className="timeline-item-card">
+                  <div className="timeline-marker" />
+                  <div className="timeline-content">
+                    <div className="timeline-header-row">
+                      <h4 className="exp-role-title">{exp.role}</h4>
+                      <span className="exp-duration-badge">{exp.duration}</span>
                     </div>
-                    <p className="role-description-text">{exp?.description || 'Delivered core full-stack features and API optimizations.'}</p>
+                    <div className="exp-company-sub">{exp.company} • {exp.location || 'India'}</div>
+                    <p className="exp-desc-text">{exp.description}</p>
                   </div>
                 </div>
               ))}
@@ -308,26 +211,24 @@ export default function ProfilePage() {
           </div>
 
           {/* Education */}
-          <div className="card profile-block-card">
-            <div className="block-card-header">
-              <div className="header-icon-box green">
-                <GraduationCap size={18} />
-              </div>
-              <h3>Education & Qualifications</h3>
+          <div className="card profile-section-card">
+            <div className="section-card-title">
+              <GraduationCap size={18} className="title-icon green" />
+              <span>Education & Qualifications</span>
             </div>
 
-            <div className="education-cards-grid">
+            <div className="education-list">
               {(profile.education || []).map((edu, i) => (
-                <div key={i} className="edu-fancy-item card">
-                  <div className="edu-cap-icon">
-                    <GraduationCap size={22} />
+                <div key={i} className="edu-card-item">
+                  <div className="edu-icon-wrap">
+                    <GraduationCap size={20} />
                   </div>
-                  <div className="edu-info-body">
-                    <h4 className="degree-name">{edu.degree}</h4>
-                    <div className="school-name">{edu.institution}</div>
-                    <div className="school-meta">
+                  <div className="edu-details">
+                    <h4 className="edu-degree-title">{edu.degree}</h4>
+                    <div className="edu-school-name">{edu.institution}</div>
+                    <div className="edu-meta-row">
                       <span>{edu.year}</span>
-                      {edu.score && <span className="score-badge">{edu.score}</span>}
+                      {edu.score && <span className="edu-score-chip">{edu.score}</span>}
                     </div>
                   </div>
                 </div>
@@ -336,145 +237,81 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Right Sidebar Column */}
-        <div className="layout-column-right">
+        {/* Right Column: Top Skills, Target Roles, Projects, Certifications */}
+        <div className="profile-right-column">
           {/* Target Roles */}
-          <div className="card profile-block-card">
-            <div className="block-card-header">
-              <div className="header-icon-box orange">
-                <Target size={18} />
-              </div>
-              <h3>Target Career Roles</h3>
+          <div className="card profile-section-card">
+            <div className="section-card-title">
+              <Target size={18} className="title-icon orange" />
+              <span>Target Roles</span>
             </div>
-
-            {editMode ? (
-              <div className="edit-section-box">
-                <div className="pills-flex-wrap">
-                  {(form.target_roles || []).map(role => (
-                    <span key={role} className="editable-tag-pill orange">
-                      {role}
-                      <X size={12} className="tag-x-btn" onClick={() => handleRemoveRole(role)} />
-                    </span>
-                  ))}
-                </div>
-                <div className="add-tag-row">
-                  <input
-                    type="text"
-                    className="add-tag-input"
-                    placeholder="Add target role..."
-                    value={newRole}
-                    onChange={e => setNewRole(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleAddRole(); }}
-                  />
-                  <button className="btn btn-secondary btn-sm" onClick={handleAddRole}>
-                    <Plus size={14} />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="pills-flex-wrap">
-                {(profile.target_roles || []).map(role => (
-                  <span key={role} className="target-role-pill-fancy">
-                    <span className="role-dot" /> {role}
-                  </span>
-                ))}
-              </div>
-            )}
+            <div className="target-roles-wrap">
+              {(profile.target_roles || []).map(role => (
+                <span key={role} className="target-role-pill">
+                  <span className="pill-dot" /> {role}
+                </span>
+              ))}
+            </div>
           </div>
 
-          {/* Technical Skills Matrix */}
-          <div className="card profile-block-card">
-            <div className="block-card-header">
-              <div className="header-icon-box purple">
-                <Code size={18} />
-              </div>
-              <h3>Technical Skills Matrix ({totalSkillsCount})</h3>
+          {/* Top Technical Skills */}
+          <div className="card profile-section-card">
+            <div className="section-card-title">
+              <Code size={18} className="title-icon blue" />
+              <span>Technical Skills</span>
             </div>
-
-            {editMode ? (
-              <div className="edit-section-box">
-                <div className="pills-flex-wrap">
-                  {(form.skills || []).map(skill => (
-                    <span key={skill} className="editable-tag-pill blue">
-                      {skill}
-                      <X size={12} className="tag-x-btn" onClick={() => handleRemoveSkill(skill)} />
-                    </span>
-                  ))}
-                </div>
-                <div className="add-tag-row">
-                  <input
-                    type="text"
-                    className="add-tag-input"
-                    placeholder="Add technical skill..."
-                    value={newSkill}
-                    onChange={e => setNewSkill(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleAddSkill(); }}
-                  />
-                  <button className="btn btn-secondary btn-sm" onClick={handleAddSkill}>
-                    <Plus size={14} />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="pills-flex-wrap">
-                {(profile.skills || []).map((skill, idx) => (
-                  <span key={skill} className={`fancy-skill-badge pill-col-${idx % 5}`}>
-                    <CheckCircle2 size={12} /> {skill}
-                  </span>
-                ))}
-              </div>
-            )}
+            <div className="skills-grid-wrap">
+              {(profile.skills || []).map(skill => (
+                <span key={skill} className="skill-glow-pill">
+                  {skill}
+                </span>
+              ))}
+            </div>
           </div>
 
-          {/* Featured Projects */}
-          <div className="card profile-block-card">
-            <div className="block-card-header">
-              <div className="header-icon-box green">
-                <FolderOpen size={18} />
-              </div>
-              <h3>Featured Projects ({totalProjCount})</h3>
+          {/* Projects */}
+          <div className="card profile-section-card">
+            <div className="section-card-title">
+              <FolderOpen size={18} className="title-icon purple" />
+              <span>Featured Projects</span>
             </div>
 
-            <div className="projects-card-stack">
+            <div className="projects-column-list">
               {(profile.projects || []).map((proj, i) => (
-                <div key={i} className="fancy-project-item">
-                  <div className="project-header-line">
-                    <h4 className="project-title-name">{typeof proj === 'string' ? proj : (proj?.name || 'Project')}</h4>
+                <div key={i} className="featured-project-card">
+                  <div className="proj-card-top">
+                    <h4 className="proj-name">{proj.name}</h4>
                     {proj.link && (
-                      <a href={proj.link} target="_blank" rel="noreferrer" className="project-link-icon" title="View Code Repository">
-                        <ExternalLink size={15} />
+                      <a href={proj.link} target="_blank" rel="noreferrer" className="proj-link-btn" title="View Repository">
+                        <ExternalLink size={14} />
                       </a>
                     )}
                   </div>
-                  {proj.description && <p className="project-desc-line">{proj.description}</p>}
-                  {proj.skills && (
-                    <div className="project-tech-pills">
-                      {(Array.isArray(proj.skills) ? proj.skills : String(proj.skills).split(',')).map(s => (
-                        <span key={s} className="tech-tag-chip">{String(s).trim()}</span>
-                      ))}
-                    </div>
-                  )}
+                  <p className="proj-description">{proj.description}</p>
+                  <div className="proj-tech-tags">
+                    {(proj.skills || []).map(s => (
+                      <span key={s} className="tech-tag">{s}</span>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Certifications */}
-          <div className="card profile-block-card">
-            <div className="block-card-header">
-              <div className="header-icon-box blue">
-                <Award size={18} />
-              </div>
-              <h3>Certifications & Badges</h3>
+          <div className="card profile-section-card">
+            <div className="section-card-title">
+              <Award size={18} className="title-icon green" />
+              <span>Certifications</span>
             </div>
 
-            <div className="cert-stack">
+            <div className="certifications-list">
               {(profile.certifications || []).map((cert, i) => (
-                <div key={i} className="cert-fancy-row">
-                  <Award size={18} className="cert-award-icon" />
-                  <div>
-                    <h5 className="cert-name-text">{typeof cert === 'string' ? cert : cert.title}</h5>
-                    <div className="cert-sub-text">{cert.provider || 'Verified Standard'} • {cert.date || '2024'}</div>
+                <div key={i} className="cert-card-row">
+                  <CheckCircle2 size={18} className="cert-check-icon" />
+                  <div className="cert-info">
+                    <h5 className="cert-title-name">{typeof cert === 'string' ? cert : cert.title}</h5>
+                    <div className="cert-meta-sub">{cert.provider || 'Verified'} • {cert.date || '2024'}</div>
                   </div>
                 </div>
               ))}
